@@ -34,30 +34,42 @@ public class Robot extends TimedRobot {
 //Define Everything
   //Motor Controllers
   //Right Side Motors
-  TalonSRX rightMasterMotor1 = new TalonSRX(1);
-  VictorSPX rightSlaveMotor2 = new VictorSPX(2);
-  VictorSPX rightSlaveMotor3 = new VictorSPX(3);
+  TalonSRX rightMasterMotor1 = new TalonSRX(3);
+  VictorSPX rightSlaveMotor2 = new VictorSPX(5);
+  VictorSPX rightSlaveMotor3 = new VictorSPX(7);
   //Left Side Motors
-  TalonSRX leftMasterMotor1 = new TalonSRX(4);
-  VictorSPX leftSlaveMotor2 = new VictorSPX(5);
+  TalonSRX leftMasterMotor1 = new TalonSRX(2);
+  VictorSPX leftSlaveMotor2 = new VictorSPX(4);
   VictorSPX leftSlaveMotor3 = new VictorSPX(6);
 
   //Joysticks
   private Joystick leftJoy;
   private Joystick rghtJoy;
-
+ 
+  //Usually Variables
+  //Encoder Counts per Revolution
+  final private double countPerRev = 4096;
+  //wheel Radius
+  final private double wheelRadius = 3;
+  //Wheel Circumference
+  final private double wheelCircumference = 2* Math.PI * wheelRadius; //Circumference (in inches) (2*r*pi)
+  double distance;
+  double velocity; 
+  
   /**
    * This function is run when the robot is first started up and should be
    * used for any initialization code.
    */
+  
   @Override
   public void robotInit() {
     m_chooser.setDefaultOption("Default Auto", kDefaultAuto);
     m_chooser.addOption("My Auto", kCustomAuto);
     SmartDashboard.putData("Auto choices", m_chooser);
+    
     //Joystick
     leftJoy = new Joystick(0);
-    rghtJoy = new Joystick(1);
+    rghtJoy = new Joystick(1);    
 
     //Sets up motor controller settings for right side
     rightMasterMotor1.setInverted(false);
@@ -67,9 +79,15 @@ public class Robot extends TimedRobot {
     rightMasterMotor1.setNeutralMode(NeutralMode.Brake);
     rightSlaveMotor2.setNeutralMode(NeutralMode.Brake);
     rightSlaveMotor3.setNeutralMode(NeutralMode.Brake);
+    
     //Encoder Right Side
     rightMasterMotor1.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Absolute, 0, 10);
-
+    //Reverse Direction of Encoder
+    rightMasterMotor1.setSensorPhase(true);
+    //Set right side encoder Pos to 0 
+    rightMasterMotor1.setSelectedSensorPosition(0);
+    
+    
     //Sets up motor controller settings for left side
     leftMasterMotor1.setInverted(true);
     leftSlaveMotor2.setInverted(true);
@@ -82,6 +100,7 @@ public class Robot extends TimedRobot {
     leftMasterMotor1.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Absolute, 0, 10);
     //Reverse Direction of Encoder
     leftMasterMotor1.setSensorPhase(true);
+    
   }
 
   /**
@@ -135,6 +154,23 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void teleopPeriodic() {
+    
+      double rightEncoderPos = rightMasterMotor1.getSelectedSensorPosition();
+      double rightEncoderVel = rightMasterMotor1.getSelectedSensorVelocity();
+      //double leftEncoderPos = leftMasterMotor1.getSelectedSensorPosition();
+      //Encoder Counts per Distance
+    
+      double cimRPM = 4500;
+      double gearRatio = 6.23;
+    
+      velocity = (cimRPM/600)*(countPerRev/gearRatio);
+      distance = (rightEncoderPos * wheelCircumference)/countPerRev; 
+      
+      SmartDashboard.putNumber("Right Side Pos", distance);
+      SmartDashboard.putNumber("Right Side Vel", rightEncoderVel);
+      SmartDashboard.putNumber("Max Velocity", velocity);
+      System.out.println("Right Side Encoder Postion: " + distance);
+    
     //Drive Train Controls
       //Control Mode - Right side controlled by right joystick
       rightMasterMotor1.set(ControlMode.PercentOutput, rghtJoy.getY());
@@ -147,6 +183,39 @@ public class Robot extends TimedRobot {
       //Follow Master
       leftSlaveMotor2.follow(leftMasterMotor1);
       leftSlaveMotor3.follow(leftMasterMotor1);
+     
+      //drive 50 inches
+      if(rghtJoy.getRawButton(3)==true){
+        distance = 50.0;
+        rightMasterMotor1.set(ControlMode.Position, distance);
+      }
+/*
+      //Intake Mode - 1 Motor controlled but a Trigger
+      if(secondJoy.getTriggerPressed()){
+         intakeMotor.set(ControlMode.PercentOutput, .5);
+      }
+
+      //Outtake Mode with button number 3
+      if(secondJoy.getRawButtonPressed(5)){
+        intakeMotor.set(ControlMode.PercentOutput, -.5);
+      }
+
+      //Arm Mode up - Controlled by a buttons 3
+      if(secondJoy.getRawButtonPressed(3)){
+      armMasterMotor.set(ControlMode.PercentOutput, .5);
+      }
+      //Arm Mode down - controlled by a button 2
+      if(secondJoy.getRawButtonPressed(2)){
+      armMasterMotor.set(ControlMode.PercentOutput, -.5);
+      }
+      //Follow Master
+      armSlaveMotor.follow(armMasterMotor);
+
+      //Elevator - Elevator controlled by a joystick
+      elevatorMasterMotor.set(ControlMode.PercentOutput,secondJoy.getY());
+      //Follow Master
+      elevatorSlaveMotor.follow(elevatorMasterMotor);
+      */
   }
 
   /**
