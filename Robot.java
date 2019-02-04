@@ -81,7 +81,7 @@ public class Robot extends TimedRobot {
     rightSlaveMotor3.setNeutralMode(NeutralMode.Brake);
     
     //Encoder Right Side
-    rightMasterMotor1.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Absolute, 0, 10);
+    rightMasterMotor1.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Absolute, Constants.PID_PRIMARY, Constants.kTimeoutMs);
     //Reverse Direction of Encoder
     rightMasterMotor1.setSensorPhase(true);
     //Set right side encoder Pos to 0 
@@ -103,7 +103,7 @@ public class Robot extends TimedRobot {
     leftSlaveMotor2.setNeutralMode(NeutralMode.Brake);
     leftSlaveMotor3.setNeutralMode(NeutralMode.Brake);
     //Encoder Left Side
-    leftMasterMotor1.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Absolute, 0, 10);
+    leftMasterMotor1.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Absolute, Constants.PID_PRIMARY, Constants.kTimeoutMs);
     //Reverse Direction of Encoder
     leftMasterMotor1.setSensorPhase(true);
     
