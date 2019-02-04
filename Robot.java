@@ -4,6 +4,7 @@
 /* must be accompanied by the FIRST BSD license file in the root directory of */
 /* the project.                                                               */
 /*----------------------------------------------------------------------------*/
+// A project by Ricardo Santamaria-Sarcos, Dario Zaccagnino, Christian Kolowich and David James
 
 package frc.robot;
 
