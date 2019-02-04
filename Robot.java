@@ -87,6 +87,12 @@ public class Robot extends TimedRobot {
     //Set right side encoder Pos to 0 
     rightMasterMotor1.setSelectedSensorPosition(0);
     
+    //Config PID F Gains
+    rightMasterMotor1.config_kP(Constants.kSlot_Distanc, Constants.kGains_Distanc.kP, Constants.kTimeoutMs);
+    rightMasterMotor1.config_kI(Constants.kSlot_Distanc, Constants.kGains_Distanc.kI, Constants.kTimeoutMs);
+    rightMasterMotor1.config_kD(Constants.kSlot_Distanc, Constants.kGains_Distanc.kD, Constants.kTimeoutMs);
+    rightMasterMotor1.config_kF(Constants.kSlot_Distanc, Constants.kGains_Distanc.kF, Constants.kTimeoutMs);
+    
     
     //Sets up motor controller settings for left side
     leftMasterMotor1.setInverted(true);
@@ -100,6 +106,12 @@ public class Robot extends TimedRobot {
     leftMasterMotor1.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Absolute, 0, 10);
     //Reverse Direction of Encoder
     leftMasterMotor1.setSensorPhase(true);
+    
+    /Config PID F Gains
+    leftMasterMotor1.config_kP(Constants.kSlot_Distanc, Constants.kGains_Distanc.kP, Constants.kTimeoutMs);
+    leftMasterMotor1.config_kI(Constants.kSlot_Distanc, Constants.kGains_Distanc.kI, Constants.kTimeoutMs);
+    leftMasterMotor1.config_kD(Constants.kSlot_Distanc, Constants.kGains_Distanc.kD, Constants.kTimeoutMs);
+    leftMasterMotor1.config_kF(Constants.kSlot_Distanc, Constants.kGains_Distanc.kF, Constants.kTimeoutMs);
     
   }
 
@@ -155,21 +167,23 @@ public class Robot extends TimedRobot {
   @Override
   public void teleopPeriodic() {
     
-      double rightEncoderPos = rightMasterMotor1.getSelectedSensorPosition();
-      double rightEncoderVel = rightMasterMotor1.getSelectedSensorVelocity();
+      double rightEncoderPos = rightMasterMotor1.getSelectedSensorPosition(0);
+      double rightEncoderVel = rightMasterMotor1.getSelectedSensorVelocity(0);
       //double leftEncoderPos = leftMasterMotor1.getSelectedSensorPosition();
       //Encoder Counts per Distance
     
-      double cimRPM = 4500;
-      double gearRatio = 6.23;
+      //double cimRPM = 4500;
+      //double gearRatio = 6.23;
+      
     
-      velocity = (cimRPM/600)*(countPerRev/gearRatio);
+      //velocity = (cimRPM/600)*(countPerRev/gearRatio);
       distance = (rightEncoderPos * wheelCircumference)/countPerRev; 
       
+ 
       SmartDashboard.putNumber("Right Side Pos", distance);
       SmartDashboard.putNumber("Right Side Vel", rightEncoderVel);
-      SmartDashboard.putNumber("Max Velocity", velocity);
-      System.out.println("Right Side Encoder Postion: " + distance);
+      //SmartDashboard.putNumber("Max Velocity", velocity);
+      //System.out.println("Right Side Encoder Postion: " + distance);
     
     //Drive Train Controls
       //Control Mode - Right side controlled by right joystick
@@ -185,9 +199,8 @@ public class Robot extends TimedRobot {
       leftSlaveMotor3.follow(leftMasterMotor1);
      
       //drive 50 inches
-      if(rghtJoy.getRawButton(3)==true){
-        distance = 50.0;
-        rightMasterMotor1.set(ControlMode.Position, distance);
+      if(rghtJoy.getRawButtonPressed(3)){
+        driveToTargetDist(50.0);
       }
 /*
       //Intake Mode - 1 Motor controlled but a Trigger
@@ -223,5 +236,14 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void testPeriodic() {
+  }
+  
+  //Drive set amount  - in inches
+  public void driveToTargetDist(double dist){
+    double targetDist = dist; //Inches
+    double setPoint;
+    setPoint = (dist * countPerRev)/wheelCircumference;
+    System.out.println("Button Pressed. Moving to: " + targetDist);
+    rightMasterMotor1.set(ControlMode.Position, setPoint);
   }
 }
