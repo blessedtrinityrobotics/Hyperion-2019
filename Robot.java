@@ -16,6 +16,7 @@ import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.FeedbackDevice;
 //import com.ctre.phoenix.motorcontrol.can.BaseMotorController;
 import edu.wpi.first.wpilibj.Joystick;
+
 import com.ctre.phoenix.motorcontrol.can.VictorSPX;
 import com.ctre.phoenix.motorcontrol.NeutralMode;
 
@@ -31,20 +32,30 @@ public class Robot extends TimedRobot {
   private static final String kCustomAuto = "My Auto";
   private String m_autoSelected;
   private final SendableChooser<String> m_chooser = new SendableChooser<>();
-//Define Everything
-  //Motor Controllers
+//Define Motors Controllers
+//DRIVE TRAIN
   //Right Side Motors
-  TalonSRX rightMasterMotor1 = new TalonSRX(3);
-  VictorSPX rightSlaveMotor2 = new VictorSPX(5);
-  VictorSPX rightSlaveMotor3 = new VictorSPX(7);
+  TalonSRX  rightMasterMotor1 = new TalonSRX  (3);
+  VictorSPX rightSlaveMotor2  = new VictorSPX (5);
+  VictorSPX rightSlaveMotor3  = new VictorSPX (7);
   //Left Side Motors
-  TalonSRX leftMasterMotor1 = new TalonSRX(2);
-  VictorSPX leftSlaveMotor2 = new VictorSPX(4);
-  VictorSPX leftSlaveMotor3 = new VictorSPX(6);
-
+  TalonSRX  leftMasterMotor1  = new TalonSRX  (2);
+  VictorSPX leftSlaveMotor2   = new VictorSPX (4);
+  VictorSPX leftSlaveMotor3   = new VictorSPX (6);
+//ELEVATOR
+  //Left GB
+  TalonSRX  elevLeftMaster    = new TalonSRX  (8);
+  VictorSPX elevLeftSlave     = new VictorSPX (9);
+  //Right GB
+  TalonSRX  elevRightMaster   = new TalonSRX  (10);
+  VictorSPX elevRightSlave    = new VictorSPX (11);
+//WRIST
+  TalonSRX  wristMaster       = new TalonSRX  (12);
+  VictorSPX wristSlave        = new VictorSPX (13);
   //Joysticks
   private Joystick leftJoy;
   private Joystick rghtJoy;
+  private Joystick operatorJoy;
  
   //Usually Variables
   //Encoder Counts per Revolution
@@ -69,50 +80,92 @@ public class Robot extends TimedRobot {
     
     //Joystick
     leftJoy = new Joystick(0);
-    rghtJoy = new Joystick(1);    
+    rghtJoy = new Joystick(1);  
+    operatorJoy = new Joystick(2);  
+    
 
-    //Sets up motor controller settings for right side
-    rightMasterMotor1.setInverted(false);
-    rightSlaveMotor2.setInverted(false);
-    rightSlaveMotor3.setInverted(false);
-    rightMasterMotor1.configOpenloopRamp(1, 0);
-    rightMasterMotor1.setNeutralMode(NeutralMode.Brake);
-    rightSlaveMotor2.setNeutralMode(NeutralMode.Brake);
-    rightSlaveMotor3.setNeutralMode(NeutralMode.Brake);
+      //DRIVE TRAIN
+      //Sets up motor controller settings for right side
+      rightMasterMotor1.setInverted(false);
+      rightSlaveMotor2.setInverted(false);
+      rightSlaveMotor3.setInverted(false);
+      rightMasterMotor1.configOpenloopRamp(1, 0);
+      rightMasterMotor1.setNeutralMode(NeutralMode.Brake);
+      rightSlaveMotor2.setNeutralMode(NeutralMode.Brake);
+      rightSlaveMotor3.setNeutralMode(NeutralMode.Brake);
+      
+      //Encoder Right Side
+      rightMasterMotor1.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Absolute, Constants.PID_PRIMARY, Constants.kTimeoutMs);
+      //Reverse Direction of Encoder
+      rightMasterMotor1.setSensorPhase(true);
+      
+      //Config PID F Gains
+      rightMasterMotor1.config_kP(Constants.kSlot_Distanc, Constants.kGains_Distanc.kP, Constants.kTimeoutMs);
+      rightMasterMotor1.config_kI(Constants.kSlot_Distanc, Constants.kGains_Distanc.kI, Constants.kTimeoutMs);
+      rightMasterMotor1.config_kD(Constants.kSlot_Distanc, Constants.kGains_Distanc.kD, Constants.kTimeoutMs);
+      rightMasterMotor1.config_kF(Constants.kSlot_Distanc, Constants.kGains_Distanc.kF, Constants.kTimeoutMs);
+      
+      
+      //Sets up motor controller settings for left side
+      leftMasterMotor1.setInverted(true);
+      leftSlaveMotor2.setInverted(true);
+      leftSlaveMotor3.setInverted(true);
+      leftMasterMotor1.configOpenloopRamp(1, 0);
+      leftMasterMotor1.setNeutralMode(NeutralMode.Brake);
+      leftSlaveMotor2.setNeutralMode(NeutralMode.Brake);
+      leftSlaveMotor3.setNeutralMode(NeutralMode.Brake);
+      //Encoder Left Side
+      leftMasterMotor1.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Absolute, Constants.PID_PRIMARY, Constants.kTimeoutMs);
+      //Reverse Direction of Encoder
+      leftMasterMotor1.setSensorPhase(true);
+
+      //Config PID F Gains
+      leftMasterMotor1.config_kP(Constants.kSlot_Distanc, Constants.kGains_Distanc.kP, Constants.kTimeoutMs);
+      leftMasterMotor1.config_kI(Constants.kSlot_Distanc, Constants.kGains_Distanc.kI, Constants.kTimeoutMs);
+      leftMasterMotor1.config_kD(Constants.kSlot_Distanc, Constants.kGains_Distanc.kD, Constants.kTimeoutMs);
+      leftMasterMotor1.config_kF(Constants.kSlot_Distanc, Constants.kGains_Distanc.kF, Constants.kTimeoutMs);
+    //END OF DRIVE TRAIN
+
+    //ELEVATOR
+    //Left
+    elevLeftMaster.setInverted(true); //Reverse direction
+    elevLeftSlave .setInverted(true); //Reverse direction
+    elevLeftMaster.setNeutralMode(NeutralMode.Brake);
+    elevLeftSlave .setNeutralMode(NeutralMode.Brake);
+      //Encoder
+      elevLeftMaster.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Absolute, Constants.PID_PRIMARY, Constants.kTimeoutMs);
+      elevLeftMaster.setSensorPhase(true); //Reverse direction
+      //Config PID F Gains
+      elevLeftMaster.config_kP(Constants.kSlot_Elev, Constants.kGains_Elev.kP, Constants.kTimeoutMs);
+      elevLeftMaster.config_kI(Constants.kSlot_Elev, Constants.kGains_Elev.kI, Constants.kTimeoutMs);
+      elevLeftMaster.config_kD(Constants.kSlot_Elev, Constants.kGains_Elev.kD, Constants.kTimeoutMs);
+      elevLeftMaster.config_kF(Constants.kSlot_Elev, Constants.kGains_Elev.kF, Constants.kTimeoutMs);
+      elevLeftMaster.configMotionAcceleration(Constants.kElevAccel, Constants.kTimeoutMs);
+      elevLeftMaster.configMotionCruiseVelocity(Constants.kElevVel, Constants.kTimeoutMs);
+    //Right
+    elevRightMaster.setInverted(false); //Reverse direction
+    elevRightSlave .setInverted(false); //Reverse direction
+    elevRightMaster.setNeutralMode(NeutralMode.Brake);
+    elevRightSlave .setNeutralMode(NeutralMode.Brake);
+      //Encoder
+      elevRightMaster.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Absolute, Constants.PID_PRIMARY, Constants.kTimeoutMs);
+      elevRightMaster.setSensorPhase(false); //Reverse direction
+      //Config PID F Gains
+      elevRightMaster.config_kP(Constants.kSlot_Elev, Constants.kGains_Elev.kP, Constants.kTimeoutMs);
+      elevRightMaster.config_kI(Constants.kSlot_Elev, Constants.kGains_Elev.kI, Constants.kTimeoutMs);
+      elevRightMaster.config_kD(Constants.kSlot_Elev, Constants.kGains_Elev.kD, Constants.kTimeoutMs);
+      elevRightMaster.config_kF(Constants.kSlot_Elev, Constants.kGains_Elev.kF, Constants.kTimeoutMs);
+      elevRightMaster.configMotionAcceleration(Constants.kElevAccel, Constants.kTimeoutMs);
+      elevRightMaster.configMotionCruiseVelocity(Constants.kElevVel, Constants.kTimeoutMs);
+    //END OF ELEVATOR
     
-    //Encoder Right Side
-    rightMasterMotor1.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Absolute, Constants.PID_PRIMARY, Constants.kTimeoutMs);
-    //Reverse Direction of Encoder
-    rightMasterMotor1.setSensorPhase(true);
-    //Set right side encoder Pos to 0 
-    rightMasterMotor1.setSelectedSensorPosition(0);
-    
-    //Config PID F Gains
-    rightMasterMotor1.config_kP(Constants.kSlot_Distanc, Constants.kGains_Distanc.kP, Constants.kTimeoutMs);
-    rightMasterMotor1.config_kI(Constants.kSlot_Distanc, Constants.kGains_Distanc.kI, Constants.kTimeoutMs);
-    rightMasterMotor1.config_kD(Constants.kSlot_Distanc, Constants.kGains_Distanc.kD, Constants.kTimeoutMs);
-    rightMasterMotor1.config_kF(Constants.kSlot_Distanc, Constants.kGains_Distanc.kF, Constants.kTimeoutMs);
-    
-    
-    //Sets up motor controller settings for left side
-    leftMasterMotor1.setInverted(true);
-    leftSlaveMotor2.setInverted(true);
-    leftSlaveMotor3.setInverted(true);
-    leftMasterMotor1.configOpenloopRamp(1, 0);
-    leftMasterMotor1.setNeutralMode(NeutralMode.Brake);
-    leftSlaveMotor2.setNeutralMode(NeutralMode.Brake);
-    leftSlaveMotor3.setNeutralMode(NeutralMode.Brake);
-    //Encoder Left Side
-    leftMasterMotor1.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Absolute, Constants.PID_PRIMARY, Constants.kTimeoutMs);
-    //Reverse Direction of Encoder
-    leftMasterMotor1.setSensorPhase(true);
-    
-    /Config PID F Gains
-    leftMasterMotor1.config_kP(Constants.kSlot_Distanc, Constants.kGains_Distanc.kP, Constants.kTimeoutMs);
-    leftMasterMotor1.config_kI(Constants.kSlot_Distanc, Constants.kGains_Distanc.kI, Constants.kTimeoutMs);
-    leftMasterMotor1.config_kD(Constants.kSlot_Distanc, Constants.kGains_Distanc.kD, Constants.kTimeoutMs);
-    leftMasterMotor1.config_kF(Constants.kSlot_Distanc, Constants.kGains_Distanc.kF, Constants.kTimeoutMs);
-    
+    //WRIST
+
+    //END OF WRIST
+
+    //INTAKE
+
+    //END OF INTAKE
   }
 
   /**
@@ -141,7 +194,7 @@ public class Robot extends TimedRobot {
   @Override
   public void autonomousInit() {
     m_autoSelected = m_chooser.getSelected();
-    // m_autoSelected = SmartDashboard.getString("Auto Selector", kDefaultAuto);
+    m_autoSelected = SmartDashboard.getString("Auto Selector", kDefaultAuto);
     System.out.println("Auto selected: " + m_autoSelected);
   }
 
@@ -198,9 +251,14 @@ public class Robot extends TimedRobot {
       leftSlaveMotor2.follow(leftMasterMotor1);
       leftSlaveMotor3.follow(leftMasterMotor1);
      
-      //drive 50 inches
-      if(rghtJoy.getRawButtonPressed(3)){
-        driveToTargetDist(50.0);
+      //move elev up 50 inches
+      if(rghtJoy.getTrigger()){
+        MoveElevToTarget(50.0);
+      } else {
+        elevLeftMaster.set(ControlMode.PercentOutput, operatorJoy.getY());
+        elevRightMaster.set(ControlMode.PercentOutput, operatorJoy.getY());
+        elevLeftSlave.follow(elevLeftMaster);
+        elevRightSlave.follow(elevRightMaster);
       }
 /*
       //Intake Mode - 1 Motor controlled but a Trigger
@@ -237,7 +295,8 @@ public class Robot extends TimedRobot {
   @Override
   public void testPeriodic() {
   }
-  
+
+
   //Drive set amount  - in inches
   public void driveToTargetDist(double dist){
     double targetDist = dist; //Inches
@@ -245,5 +304,17 @@ public class Robot extends TimedRobot {
     setPoint = (dist * countPerRev)/wheelCircumference;
     System.out.println("Button Pressed. Moving to: " + targetDist);
     rightMasterMotor1.set(ControlMode.Position, setPoint);
+  }
+
+  //Move Elev set amount  - in inches
+  public void MoveElevToTarget(double dist){
+    double targetDist = dist; //Inches
+    double setPoint;
+    setPoint = (dist * countPerRev)/wheelCircumference;
+    System.out.println("Button Pressed. Moving to: " + targetDist);
+    elevRightMaster.set(ControlMode.MotionMagic, setPoint);
+    elevRightSlave.follow(elevRightMaster);
+    elevLeftMaster.set(ControlMode.MotionMagic, setPoint);
+    elevLeftSlave.follow(elevLeftMaster);
   }
 }
