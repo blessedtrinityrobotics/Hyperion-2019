@@ -9,6 +9,12 @@ public class Constants {
 	 * Set to nonzero to wait and report to DS if action fails.
 	 */
 	public final static int kTimeoutMs = 30;
+	
+	//Acceleration of Elevator in sensorUnitsPer100msPerSec
+	public final static int kElevAccel = 3410;
+
+	//speed of Elevator in sensorUnitsPer100ms
+	public static int kElevVel = 3410;
 
 	/**
 	 * PID Gains may have to be adjusted based on the responsiveness of control loop.
@@ -17,7 +23,7 @@ public class Constants {
      * 
 	 * 	                                    			  kP   kI   kD   kF               Iz    PeakOut */
 	public final static Gains kGains_Distanc = new Gains( 0.1, 0.0,  0.0, 0.0,            100,  0.50 );
-    public final static Gains kGains_Elev    = new Gains( 1.0, 0.0,  0.0, 0.0,            500,  0.50 );
+    public final static Gains kGains_Elev    = new Gains( 0.0, 0.0,  0.0, 0.15,            500,  0.50 );
 	
 	/** ---- Flat constants, you should not need to change these ---- */
 	/* We allow either a 0 or 1 when selecting an ordinal for remote devices [You can have up to 2 devices assigned remotely to a talon/victor] */
