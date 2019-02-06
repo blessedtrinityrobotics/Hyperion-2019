@@ -16,6 +16,11 @@ public class Constants {
 	//speed of Elevator in sensorUnitsPer100ms
 	public static int kElevVel = 3410;
 
+	//Acceleration of wrist in sensorUnitsPer100msPerSec
+	public final static int kWristAccel = 139 ;
+	//Speed of Elevator in sensorUnitsPer100ms
+	public final static int kWristVel = 139;
+
 	/**
 	 * PID Gains may have to be adjusted based on the responsiveness of control loop.
      * kF: 1023 represents output value to Talon at 100%, 6800 represents Velocity units at 100% output
@@ -23,7 +28,9 @@ public class Constants {
      * 
 	 * 	                                    			  kP   kI   kD   kF               Iz    PeakOut */
 	public final static Gains kGains_Distanc = new Gains( 0.1, 0.0,  0.0, 0.0,            100,  0.50 );
-    public final static Gains kGains_Elev    = new Gains( 0.0, 0.0,  0.0, 0.15,            500,  0.50 );
+	public final static Gains kGains_Elev    = new Gains( 0.0, 0.0,  0.0, 0.15,            500,  0.50 );
+	public final static Gains kGains_Wrist    = new Gains( 0.0, 0.0,  0.0, 3.67,            500,  0.50 );
+
 	
 	/** ---- Flat constants, you should not need to change these ---- */
 	/* We allow either a 0 or 1 when selecting an ordinal for remote devices [You can have up to 2 devices assigned remotely to a talon/victor] */
@@ -40,4 +47,5 @@ public class Constants {
 	/* ---- Named slots, used to clarify code ---- */
 	public final static int kSlot_Distanc = SLOT_0;
 	public final static int kSlot_Elev = SLOT_1;
+	public final static int kSlot_Wrist = SLOT_2;
 }
