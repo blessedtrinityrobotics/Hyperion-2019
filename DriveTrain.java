@@ -24,6 +24,8 @@ import edu.wpi.first.wpilibj.CameraServer;
 import com.ctre.phoenix.motorcontrol.can.VictorSPX;
 import com.ctre.phoenix.motorcontrol.NeutralMode;
 import edu.wpi.cscore.UsbCamera;
+import edu.wpi.first.wpilibj.ADXRS450_Gyro;
+import edu.wpi.first.networktables.NetworkTableInstance;
 
 /**
  * The VM is configured to automatically run this class, and to call the
@@ -64,8 +66,12 @@ public class Robot extends TimedRobot {
      private XboxController operatorController;
     private Joystick leftJoy;
     private Joystick rghtJoy;
-
-    
+  
+  private ADXRS450_Gyro onboardGyro;
+  
+  private boolean m_LimelightHasValidTarget = false;
+  private double m_LimelightDriveCommand = 0.0;
+  private double m_LimelightSteerCommand = 0.0;
   /**
    * This function is run when the robot is first started up and should be
    * used for any initialization code.
@@ -77,13 +83,17 @@ public class Robot extends TimedRobot {
     //m_chooser.addOption("My Auto", kCustomAuto);
     SmartDashboard.putData("Auto choices", m_chooser);
     
-    //Joystick
+    //CONTROLLERS
       leftJoy     = new Joystick(0);
       rghtJoy     = new Joystick(1);  
       operatorController = new XboxController(2); 
-      
-
-    //Emd of Joystick
+    //END OF CONTROLLERS
+    
+    //GYRO
+      onboardGyro = new  ADXRS450_Gyro();
+		  onboardGyro.calibrate();//Calibrates the gyro
+      onboardGyro.reset();//Sets gyro to 0 degrees
+    //END OF GYRO
 
     //DRIVE TRAIN
       //Sets up motor controller settings for right side
@@ -201,23 +211,45 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void teleopPeriodic() {
-
+      Update_Limelight_Tracking();
+      double driveForwardPower;
+      double turnPower;
     //Drive Train Controls
+    if (leftJoy.getTrigger())
+        {
+          if (m_LimelightHasValidTarget)
+          {
+            //Limelight vision procesing control
+            SmartDashboard.putString("Valid Target", "True");
+            driveForwardPower = m_LimelightDriveCommand;
+            turnPower = m_LimelightSteerCommand;
+            rightMasterMotor1.set(ControlMode.PercentOutput, driveForwardPower+turnPower);
+            rightSlaveMotor2.follow(rightMasterMotor1);
+            rightSlaveMotor3.follow(rightMasterMotor1);
+            leftMasterMotor1.set(ControlMode.PercentOutput, driveForwardPower-turnPower);
+            leftSlaveMotor2.follow(leftMasterMotor1);
+            leftSlaveMotor3.follow(leftMasterMotor1);
+          }
+          else
+          {
+            SmartDashboard.putString("Valid Target", "False");
+          }
+        }
+        else
+        {
+          //Percent Control Mode
+            //Control Mode - Right side controlled by right joystick
+            rightMasterMotor1.set(ControlMode.PercentOutput, rghtJoy.getY());
+            //Follow Master
+            rightSlaveMotor2.follow(rightMasterMotor1);
+            rightSlaveMotor3.follow(rightMasterMotor1);
 
-      //Control Mode - Right side controlled by right joystick
-      rightMasterMotor1.set(ControlMode.PercentOutput, rghtJoy.getY());
-
-      //Follow Master
-      rightSlaveMotor2.follow(rightMasterMotor1);
-      rightSlaveMotor3.follow(rightMasterMotor1);
-
-      //Control Mode - Left side conrolled by left joystick
-      leftMasterMotor1.set(ControlMode.PercentOutput, leftJoy.getY());
-
-      //Follow Master
-      leftSlaveMotor2.follow(leftMasterMotor1);
-      leftSlaveMotor3.follow(leftMasterMotor1);
-
+            //Control Mode - Left side conrolled by left joystick
+            leftMasterMotor1.set(ControlMode.PercentOutput, leftJoy.getY());
+            //Follow Master
+            leftSlaveMotor2.follow(leftMasterMotor1);
+            leftSlaveMotor3.follow(leftMasterMotor1);
+        }
       //Elevator
         elevLeftMaster.set(ControlMode.PercentOutput, (operatorController.getY(Hand.kLeft)/2));
         elevRightMaster.set(ControlMode.PercentOutput, (operatorController.getY(Hand.kLeft)/2));
@@ -245,5 +277,47 @@ public class Robot extends TimedRobot {
   @Override
   public void testPeriodic() {
   }
+
+/**
+   * This function implements a simple method of generating driving and steering commands
+   * based on the tracking data from a limelight camera.
+   */
+  public void Update_Limelight_Tracking()
+  {
+        // These numbers must be tuned for your Robot!  Be careful!
+        final double STEER_K = 0.5;              // how hard to turn toward the target
+        final double DRIVE_K = Constants.kGains_Distanc.kP;                    // how hard to drive fwd toward the target
+        final double DESIRED_TARGET_AREA = 13.0;        // Area of the target when the robot reaches the wall
+        final double MAX_DRIVE = 0.7;                   // Simple speed limit so we don't drive too fast
+
+        double tv = NetworkTableInstance.getDefault().getTable("limelight").getEntry("tv").getDouble(0);
+        double tx = NetworkTableInstance.getDefault().getTable("limelight").getEntry("tx").getDouble(0);
+        double ty = NetworkTableInstance.getDefault().getTable("limelight").getEntry("ty").getDouble(0);
+        double ta = NetworkTableInstance.getDefault().getTable("limelight").getEntry("ta").getDouble(0);
+
+        if (tv < 1.0)
+        {
+          m_LimelightHasValidTarget = false;
+          m_LimelightDriveCommand = 0.0;
+          m_LimelightSteerCommand = 0.0;
+          return;
+        }
+
+        m_LimelightHasValidTarget = true;
+
+        // Start with proportional steering
+        double steer_cmd = tx * STEER_K;
+        m_LimelightSteerCommand = steer_cmd;
+
+        // try to drive forward until the target area reaches our desired area
+        double drive_cmd = (DESIRED_TARGET_AREA - ta) * DRIVE_K;
+
+        // don't let the robot drive too fast into the goal
+        if (drive_cmd > MAX_DRIVE)
+        {
+          drive_cmd = MAX_DRIVE;
+        }
+        m_LimelightDriveCommand = drive_cmd;
+    }
 
 }
