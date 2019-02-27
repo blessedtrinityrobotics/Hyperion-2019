@@ -45,19 +45,19 @@ public class Robot extends TimedRobot {
   //ELEVATOR
     //Left GB
     TalonSRX  elevLeftMaster    = new TalonSRX  (8);
-    VictorSPX elevLeftSlave     = new VictorSPX (9);
+    VictorSPX elevLeftSlave     = new VictorSPX (11);
     //Right GB
-    TalonSRX  elevRightMaster   = new TalonSRX  (10);
-    VictorSPX elevRightSlave    = new VictorSPX (11);
+    TalonSRX  elevRightMaster   = new TalonSRX  (9);
+    VictorSPX elevRightSlave    = new VictorSPX (10);
   //WRIST
-    TalonSRX  wristMaster       = new TalonSRX  (12);
-    VictorSPX wristSlave        = new VictorSPX (13);
+    TalonSRX  wristMaster       = new TalonSRX  (13);
+    VictorSPX wristSlave        = new VictorSPX (12);
   //INTAKE
     VictorSPX intakeMotor       = new VictorSPX (14);
   //Joysticks
     private Joystick leftJoy;
     private Joystick rghtJoy;
-    private Joystick operatorJoy;
+    private XboxController operatorController;
 
   //Usually Variables
     //Encoder Counts per Revolution
@@ -69,6 +69,12 @@ public class Robot extends TimedRobot {
     final private double sprocketPitch =  1.79;
     double distance;
     double velocity; 
+  //Gyro
+  private ADXRS450_Gyro onboardGyro;
+  //Limelight
+  private boolean m_LimelightHasValidTarget = false;
+  private double m_LimelightDriveCommand = 0.0;
+  private double m_LimelightSteerCommand = 0.0;
     
   /**
    * This function is run when the robot is first started up and should be
@@ -81,12 +87,18 @@ public class Robot extends TimedRobot {
     m_chooser.addOption("My Auto", kCustomAuto);
     SmartDashboard.putData("Auto choices", m_chooser);
     
-    //Joystick
+    //CONTROLLERS
       leftJoy     = new Joystick(0);
       rghtJoy     = new Joystick(1);  
-      operatorJoy = new Joystick(2);  
-    //Emd of Joystick
-
+      operatorController = new XboxController(2); 
+    //END OF CONTROLLERS
+  
+    //GYRO
+      onboardGyro = new  ADXRS450_Gyro();
+		  onboardGyro.calibrate();//Calibrates the gyro
+      onboardGyro.reset();//Sets gyro to 0 degrees
+    //END OF GYRO
+    
     //DRIVE TRAIN
       //Sets up motor controller settings for right side
       rightMasterMotor1.setInverted(false);
@@ -161,7 +173,7 @@ public class Robot extends TimedRobot {
     
     //WRIST
       //Left
-      wristMaster.setInverted(true); //Reverse direction
+      wristMaster.setInverted(false); //Reverse direction
       wristSlave .setInverted(true); //Reverse direction
       wristMaster.setNeutralMode(NeutralMode.Brake);
       wristSlave .setNeutralMode(NeutralMode.Brake);
@@ -254,19 +266,45 @@ public class Robot extends TimedRobot {
       //SmartDashboard.putNumber("Max Velocity", velocity);
       //System.out.println("Right Side Encoder Postion: " + distance);
     
+    Update_Limelight_Tracking();
+      double driveForwardPower;
+      double turnPower;
     //Drive Train Controls
-      //Control Mode - Right side controlled by right joystick
-      rightMasterMotor1.set(ControlMode.PercentOutput, rghtJoy.getY());
-      //Follow Master
-      rightSlaveMotor2.follow(rightMasterMotor1);
-      rightSlaveMotor3.follow(rightMasterMotor1);
+    if (leftJoy.getTrigger())
+        {
+          if (m_LimelightHasValidTarget)
+          {
+            //Limelight vision procesing control
+            SmartDashboard.putString("Valid Target", "True");
+            driveForwardPower = m_LimelightDriveCommand;
+            turnPower = m_LimelightSteerCommand;
+            rightMasterMotor1.set(ControlMode.PercentOutput, driveForwardPower+turnPower);
+            rightSlaveMotor2.follow(rightMasterMotor1);
+            rightSlaveMotor3.follow(rightMasterMotor1);
+            leftMasterMotor1.set(ControlMode.PercentOutput, driveForwardPower-turnPower);
+            leftSlaveMotor2.follow(leftMasterMotor1);
+            leftSlaveMotor3.follow(leftMasterMotor1);
+          }
+          else
+          {
+            SmartDashboard.putString("Valid Target", "False");
+          }
+        }
+        else
+        {
+          //Percent Control Mode
+            //Control Mode - Right side controlled by right joystick
+            rightMasterMotor1.set(ControlMode.PercentOutput, rghtJoy.getY());
+            //Follow Master
+            rightSlaveMotor2.follow(rightMasterMotor1);
+            rightSlaveMotor3.follow(rightMasterMotor1);
 
-      //Control Mode - Left side conrolled by left joystick
-      leftMasterMotor1.set(ControlMode.PercentOutput, leftJoy.getY());
-      //Follow Master
-      leftSlaveMotor2.follow(leftMasterMotor1);
-      leftSlaveMotor3.follow(leftMasterMotor1);
-    
+            //Control Mode - Left side conrolled by left joystick
+            leftMasterMotor1.set(ControlMode.PercentOutput, leftJoy.getY());
+            //Follow Master
+            leftSlaveMotor2.follow(leftMasterMotor1);
+            leftSlaveMotor3.follow(leftMasterMotor1);
+        }
       //move elev up 50 inches
       if(operatorJoy.getTrigger()){
         MoveElevToTarget(50.0);
@@ -281,33 +319,16 @@ public class Robot extends TimedRobot {
       if(operatorJoy.getRawButtonPressed(2)){
         MoveWristToAngle(-45);
       }
-      /*
-      //Intake Mode - 1 Motor controlled but a Trigger
-      if(secondJoy.getTriggerPressed()){
-        intakeMotor.set(ControlMode.PercentOutput, .5);
+   
+    //Intake
+      if(operatorController.getYButton()){
+        intakeMotor.set(ControlMode.PercentOutput, 1.0);
+      } else if(operatorController.getAButton()){
+        intakeMotor.set(ControlMode.PercentOutput, -1.0);
+      } else {
+        intakeMotor.set(ControlMode.PercentOutput, 0.0);
       }
-
-      //Outtake Mode with button number 3
-      if(secondJoy.getRawButtonPressed(5)){
-        intakeMotor.set(ControlMode.PercentOutput, -.5);
-      }
-
-      //Arm Mode up - Controlled by a buttons 3
-      if(secondJoy.getRawButtonPressed(3)){
-      armMasterMotor.set(ControlMode.PercentOutput, .5);
-      }
-      //Arm Mode down - controlled by a button 2
-      if(secondJoy.getRawButtonPressed(2)){
-      armMasterMotor.set(ControlMode.PercentOutput, -.5);
-      }
-      //Follow Master
-      armSlaveMotor.follow(armMasterMotor);
-
-      //Elevator - Elevator controlled by a joystick
-      elevatorMasterMotor.set(ControlMode.PercentOutput,secondJoy.getY());
-      //Follow Master
-      elevatorSlaveMotor.follow(elevatorMasterMotor);
-      */
+    
   }
 
   /**
@@ -348,5 +369,48 @@ public class Robot extends TimedRobot {
     wristMaster.set(ControlMode.MotionMagic, setPoint);
     wristSlave.follow(wristMaster);
   }
+  
+/**
+   * This function implements a simple method of generating driving and steering commands
+   * based on the tracking data from a limelight camera.
+   */
+  public void Update_Limelight_Tracking()
+  {
+        // These numbers must be tuned for your Robot!  Be careful!
+        final double STEER_K = 0.5;              // how hard to turn toward the target
+        final double DRIVE_K = Constants.kGains_Distanc.kP;                    // how hard to drive fwd toward the target
+        final double DESIRED_TARGET_AREA = 13.0;        // Area of the target when the robot reaches the wall
+        final double MAX_DRIVE = 0.7;                   // Simple speed limit so we don't drive too fast
+
+        double tv = NetworkTableInstance.getDefault().getTable("limelight").getEntry("tv").getDouble(0);
+        double tx = NetworkTableInstance.getDefault().getTable("limelight").getEntry("tx").getDouble(0);
+        double ty = NetworkTableInstance.getDefault().getTable("limelight").getEntry("ty").getDouble(0);
+        double ta = NetworkTableInstance.getDefault().getTable("limelight").getEntry("ta").getDouble(0);
+
+        if (tv < 1.0)
+        {
+          m_LimelightHasValidTarget = false;
+          m_LimelightDriveCommand = 0.0;
+          m_LimelightSteerCommand = 0.0;
+          return;
+        }
+
+        m_LimelightHasValidTarget = true;
+
+        // Start with proportional steering
+        double steer_cmd = tx * STEER_K;
+        m_LimelightSteerCommand = steer_cmd;
+
+        // try to drive forward until the target area reaches our desired area
+        double drive_cmd = (DESIRED_TARGET_AREA - ta) * DRIVE_K;
+
+        // don't let the robot drive too fast into the goal
+        if (drive_cmd > MAX_DRIVE)
+        {
+          drive_cmd = MAX_DRIVE;
+        }
+        m_LimelightDriveCommand = drive_cmd;
+    }
+
 
 }
