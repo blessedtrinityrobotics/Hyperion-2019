@@ -17,7 +17,6 @@ import edu.wpi.first.wpilibj.PWMSpeedController;
 import edu.wpi.first.wpilibj.VictorSP;
 import edu.wpi.first.wpilibj.GenericHID.Hand;
 import edu.wpi.first.wpilibj.SpeedController;
-import edu.wpi.first.hal.RelayJNI;
 import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.Timer;
@@ -32,7 +31,7 @@ import edu.wpi.first.wpilibj.ADXRS450_Gyro;
  * creating this project, you must also update the build.gradle file in the
  * project.
  */
-public class Robot extends TimedRobot {
+public class robot extends TimedRobot {
   private static final String kDefaultAuto = "Default";
   private static final String kCustomAuto = "My Auto";
   private String m_autoSelected;
@@ -57,8 +56,8 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void robotInit() {
-    m_chooser.setDefaultOption("Default Auto", kDefaultAuto);
-    m_chooser.addOption("My Auto", kCustomAuto);
+    //m_chooser.setDefaultOption("Default Auto", kDefaultAuto);
+    //m_chooser.addOption("My Auto", kCustomAuto);
     SmartDashboard.putData("Auto choices", m_chooser);
 
     //Gyro
@@ -110,7 +109,6 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void autonomousPeriodic() {
-    int counter = 0;
     switch (m_autoSelected) {
       case kCustomAuto:
         
@@ -128,49 +126,54 @@ public class Robot extends TimedRobot {
   @Override
   public void teleopPeriodic() {
     SmartDashboard.putNumber("Gyro:", onboardGyro.getAngle());
-    rightFirst.set(-JRight.getY() - JRight.getX()/2);
-    rightSecond.set(-JRight.getY() - JRight.getX()/2);
-    leftFirst.set(-JRight.getY() + JRight.getX()/2);
-    leftSecond.set(-JRight.getY() + JRight.getX()/2);
-
-    if(JRight.getRawButton(3)){
+    
+    
+    //Reset Gyro
+    if(JRight.getTrigger()){
       onboardGyro.reset();
     }
-    if(JRight.getTrigger()){
-      double desiredAngle = 0;
-      double max_speed = 0.5;
-      double turn_kP = 0.015;
-      double curentAngle = onboardGyro.getAngle();
-      double turnCmd = (desiredAngle - curentAngle) * turn_kP;
-      SmartDashboard.putNumber("Error:", desiredAngle-curentAngle);
-      rightFirst.set(max_speed + turnCmd);
-      rightSecond.set(max_speed + turnCmd);
-      leftFirst.set(max_speed - turnCmd);
-      leftSecond.set(max_speed - turnCmd);
+    //Buttons for PID Controls
+    if(JRight.getRawButton(3)){ //Drive Straight Forward
+        PIDControl(0, 1.0);
+    } else if(JRight.getRawButton(2)){ //Drive Straight Backwards
+        PIDControl(0, -1.0);
+    } else if(JRight.getRawButton(4)){ //Turn Left 90 and continue driving straight
+        PIDControl(90, 1.0);
+    } else if(JRight.getRawButton(5)){ //Turn Right 90 and continue driving straight
+        PIDControl(-90, 1.0);
+    } else { //Arcade Drive
+        rightFirst.set(-JRight.getY() - JRight.getX()/2);
+        rightSecond.set(-JRight.getY() - JRight.getX()/2);
+        leftFirst.set(-JRight.getY() + JRight.getX()/2);
+        leftSecond.set(-JRight.getY() + JRight.getX()/2);
     }
-
-    if(JLeft.getTrigger()){
-      double desiredAngle = 90;
-      double max_speed = 0.25;
-      double turn_kP = 0.005;
-      double curentAngle = onboardGyro.getAngle();
-      double turnCmd = (desiredAngle - curentAngle) * turn_kP;
-      SmartDashboard.putNumber("Error:", desiredAngle-curentAngle);
-      rightFirst.set(max_speed + turnCmd);
-      rightSecond.set(max_speed + turnCmd);
-      leftFirst.set(max_speed - turnCmd);
-      leftSecond.set(max_speed - turnCmd);
-    }
-    if(JLeft.getRawButton(6)){
-      
-    }
-    
-  }
-
+}
   /**
    * This function is called periodically during test mode.
    */
   @Override
   public void testPeriodic() {
+  }
+
+/** 
+*
+* @param angle target angle
+* @param direction forward or backwards; 1.0 for forward, and -1.0 for backwards
+*/
+  public void PIDControl(int angle, double direction){
+    double desiredAngle = angle;
+    double max_speed = direction * 0.5;
+    double turn_kP = 0.015;
+    double turn_kI = 0;
+    double integral = 0;
+    double curentAngle = onboardGyro.getAngle();
+    double error = desiredAngle - curentAngle;
+    integral = integral + (error*0.02);
+    double turnCmd = (error * turn_kP) + (turn_kI * integral) ;
+    SmartDashboard.putNumber("Error:", error);
+    rightFirst.set(max_speed + turnCmd);
+    rightSecond.set(max_speed + turnCmd);
+    leftFirst.set(max_speed - turnCmd);
+    leftSecond.set(max_speed - turnCmd);
   }
 }
