@@ -138,7 +138,7 @@ public class Robot extends TimedRobot {
      
     //WRIST
       //Left
-      wristMaster.setInverted(true); //Reverse direction
+      wristMaster.setInverted(false); //Reverse direction
       wristSlave .setInverted(true); //Reverse direction
       wristMaster.setNeutralMode(NeutralMode.Brake);
       wristSlave .setNeutralMode(NeutralMode.Brake);
