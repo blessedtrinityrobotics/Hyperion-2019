@@ -33,7 +33,7 @@ import edu.wpi.first.networktables.NetworkTableInstance;
  * creating this project, you must also update the build.gradle file in the
  * project.
  */
-public class practiceBot extends TimedRobot {
+public class Robot extends TimedRobot {
   private static final String kDefaultAuto = "Default";
   private static final String kCustomAuto = "My Auto";
   private String m_autoSelected;
@@ -52,6 +52,8 @@ public class practiceBot extends TimedRobot {
   private boolean m_LimelightHasValidTarget = false;
   private double m_LimelightDriveCommand = 0.0;
   private double m_LimelightSteerCommand = 0.0;
+  boolean ledStatus = false;
+
   
 
 
@@ -76,6 +78,9 @@ public class practiceBot extends TimedRobot {
     rightSecond.setInverted(true);
     leftFirst.setInverted(false);
     leftSecond.setInverted(false);
+
+    //Sets Pipeline to 1
+    NetworkTableInstance.getDefault().getTable("limelight").getEntry("pipeline").setNumber(1);
   }
 
   /**
@@ -137,41 +142,33 @@ public class practiceBot extends TimedRobot {
       double driveForwardPower;
       double turnPower;
     //Drive Train Controls
-    if (JRight.getTrigger())
-        {
-          if (m_LimelightHasValidTarget)
-          {
-            //Limelight vision procesing control
-            SmartDashboard.putString("Valid Target", "True");
-            double tx = NetworkTableInstance.getDefault().getTable("limelight").getEntry("tx").getDouble(0);
-            double ta = NetworkTableInstance.getDefault().getTable("limelight").getEntry("ta").getDouble(0);
-            SmartDashboard.putNumber("TX", tx);
-            SmartDashboard.putNumber("TA", ta);
-            driveForwardPower = m_LimelightDriveCommand;
-            turnPower = m_LimelightSteerCommand;
-            rightFirst.set(driveForwardPower-turnPower);
-            rightSecond.set(driveForwardPower-turnPower);
-            leftFirst.set(driveForwardPower+turnPower);
-            leftSecond.set(driveForwardPower+turnPower);
-          }
-          else
-          {
-            SmartDashboard.putString("Valid Target", "False");
-          }
-        } else if(JRight.getRawButton(3)){ //Drive Straight Forward
-          PIDControl(0, 1.0);
-        } else if(JRight.getRawButton(2)){ //Drive Straight Backwards
-          PIDControl(0, -1.0);
-        } else if(JRight.getRawButton(4)){ //Turn Left 90 and continue driving straight
-          PIDControl(90, 1.0);
-        } else if(JRight.getRawButton(5)){ //Turn Right 90 and continue driving straight
-          PIDControl(-90, 1.0);
-        } else { //Arcade Drive
-          rightFirst.set(-JRight.getY() - JRight.getX()/2);
-          rightSecond.set(-JRight.getY() - JRight.getX()/2);
-          leftFirst.set(-JRight.getY() + JRight.getX()/2);
-          leftSecond.set(-JRight.getY() + JRight.getX()/2);
-        }
+    if (JRight.getTrigger()) {
+      if (m_LimelightHasValidTarget) {
+        //Limelight vision procesing control
+        SmartDashboard.putString("Valid Target", "True");
+        driveForwardPower = m_LimelightDriveCommand;
+        turnPower = m_LimelightSteerCommand;
+        rightFirst.set(driveForwardPower-turnPower);
+        rightSecond.set(driveForwardPower-turnPower);
+        leftFirst.set(driveForwardPower+turnPower);
+        leftSecond.set(driveForwardPower+turnPower);
+      } else {
+        SmartDashboard.putString("Valid Target", "False");
+      }
+    } else if(JRight.getRawButton(3)){ //Drive Straight Forward
+      PIDControl(0, 1.0);
+    } else if(JRight.getRawButton(2)){ //Drive Straight Backwards
+      PIDControl(0, -1.0);
+    } else if(JRight.getRawButton(4)){ //Turn Left 90 and continue driving straight
+      PIDControl(90, 1.0);
+    } else if(JRight.getRawButton(5)){ //Turn Right 90 and continue driving straight
+      PIDControl(-90, 1.0);
+    } else { //Arcade Drive
+      rightFirst.set(-JRight.getY() - JRight.getX()/2);
+      rightSecond.set(-JRight.getY() - JRight.getX()/2);
+      leftFirst.set(-JRight.getY() + JRight.getX()/2);
+      leftSecond.set(-JRight.getY() + JRight.getX()/2);
+    }
     
 
     if(JRight.getRawButton(6)){
@@ -181,22 +178,21 @@ public class practiceBot extends TimedRobot {
     if(JRight.getRawButton(11)){ // turn off vision procesing
       NetworkTableInstance.getDefault().getTable("limelight").getEntry("camMode").setNumber(1);
       NetworkTableInstance.getDefault().getTable("limelight").getEntry("ledMode").setNumber(1);
-
     } 
     if(JRight.getRawButton(10)){ // turn on vision processing
       NetworkTableInstance.getDefault().getTable("limelight").getEntry("camMode").setNumber(0);
       NetworkTableInstance.getDefault().getTable("limelight").getEntry("ledMode").setNumber(3);
-
     }
-    
-    if(JRight.getRawButton(3)){ //Drive Straight Forward
-        PIDControl(0, 1.0);
-    } else if(JRight.getRawButton(2)){ //Drive Straight Backwards
-        PIDControl(0, -1.0);
-    } else if(JRight.getRawButton(4)){ //Turn Left 90 and continue driving straight
-        PIDControl(90, 1.0);
-    } else if(JRight.getRawButton(5)){ //Turn Right 90 and continue driving straight
-        PIDControl(-90, 1.0);
+    if(JRight.getRawButton(7)){ // turn on/off LED
+      if(ledStatus){ //turn off
+        NetworkTableInstance.getDefault().getTable("limelight").getEntry("camMode").setNumber(1);
+        NetworkTableInstance.getDefault().getTable("limelight").getEntry("ledMode").setNumber(1);
+        ledStatus = false;
+      } else { //turn on
+        NetworkTableInstance.getDefault().getTable("limelight").getEntry("camMode").setNumber(1);
+        NetworkTableInstance.getDefault().getTable("limelight").getEntry("ledMode").setNumber(3);
+        ledStatus = true;
+      }
     }
   }
 
@@ -214,12 +210,12 @@ public class practiceBot extends TimedRobot {
   public void Update_Limelight_Tracking()
   {
         // These numbers must be tuned for your Robot!  Be careful!
-        final double STEER_P = 0.02;              // how hard to turn toward the target
-        final double DRIVE_P = 0.1;                    // how hard to drive fwd toward the target
-        final double DESIRED_TARGET_AREA = 3.5;       // Area of the target when the robot reaches the wall
+        final double STEER_P = 0.02/2;              // how hard to turn toward the target
+        final double DRIVE_P = 0.125;                    // how hard to drive fwd toward the target
+        final double DESIRED_TARGET_AREA = 4;       // Area of the target when the robot reaches the wall
         final double MAX_DRIVE = 0.75;                   // Simple speed limit so we don't drive too fast
-        final double STEER_I = 0;
-        final double DRIVE_I = 0;
+        final double STEER_I = 0.15;
+        final double DRIVE_I = .75;
         final double xError;
         final double aError;
         double STEER_INTEGRAL = 0;
@@ -266,14 +262,13 @@ public class practiceBot extends TimedRobot {
   public void PIDControl(int angle, double direction){
     double desiredAngle = angle;
     double max_speed = direction * 0.5;
-    double turn_kP = 0.015;
-    double turn_kI = 0;
+    double turn_kP = 0.01;
+    double turn_kI = 0.15;
     double integral = 0;
     double curentAngle = onboardGyro.getAngle();
     double error = desiredAngle - curentAngle;
     integral = integral + (error*0.02);
     double turnCmd = (error * turn_kP) + (turn_kI * integral) ;
-    SmartDashboard.putNumber("Error:", error);
     rightFirst.set(max_speed + turnCmd);
     rightSecond.set(max_speed + turnCmd);
     leftFirst.set(max_speed - turnCmd);
