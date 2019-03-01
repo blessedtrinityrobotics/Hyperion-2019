@@ -209,6 +209,15 @@ public class Robot extends TimedRobot {
       leftSecond.set(max_speed - turnCmd);
     }
     
+    if(JRight.getRawButton(3)){ //Drive Straight Forward
+        PIDControl(0, 1.0);
+    } else if(JRight.getRawButton(2)){ //Drive Straight Backwards
+        PIDControl(0, -1.0);
+    } else if(JRight.getRawButton(4)){ //Turn Left 90 and continue driving straight
+        PIDControl(90, 1.0);
+    } else if(JRight.getRawButton(5)){ //Turn Right 90 and continue driving straight
+        PIDControl(-90, 1.0);
+    }
   }
 
   /**
@@ -258,4 +267,26 @@ public class Robot extends TimedRobot {
         }
         m_LimelightDriveCommand = drive_cmd;
     }
+  
+  /** 
+*
+* @param angle target angle
+* @param direction forward or backwards; 1.0 for forward, and -1.0 for backwards
+*/
+  public void PIDControl(int angle, double direction){
+    double desiredAngle = angle;
+    double max_speed = direction * 0.5;
+    double turn_kP = 0.015;
+    double turn_kI = 0;
+    double integral = 0;
+    double curentAngle = onboardGyro.getAngle();
+    double error = desiredAngle - curentAngle;
+    integral = integral + (error*0.02);
+    double turnCmd = (error * turn_kP) + (turn_kI * integral) ;
+    SmartDashboard.putNumber("Error:", error);
+    rightFirst.set(max_speed + turnCmd);
+    rightSecond.set(max_speed + turnCmd);
+    leftFirst.set(max_speed - turnCmd);
+    leftSecond.set(max_speed - turnCmd);
+  }
 }
