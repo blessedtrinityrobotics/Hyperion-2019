@@ -141,6 +141,8 @@ public class Robot extends TimedRobot {
     Update_Limelight_Tracking();
       double driveForwardPower;
       double turnPower;
+      double skew = NetworkTableInstance.getDefault().getTable("limelight").getEntry("ts").getDouble(0);
+      SmartDashboard.putNumber("Skew", skew);
     //Drive Train Controls
     if (JRight.getTrigger()) {
       if (m_LimelightHasValidTarget) {
@@ -174,22 +176,13 @@ public class Robot extends TimedRobot {
     if(JRight.getRawButton(6)){
       onboardGyro.reset();
     }
-
-    if(JRight.getRawButton(11)){ // turn off vision procesing
-      NetworkTableInstance.getDefault().getTable("limelight").getEntry("camMode").setNumber(1);
-      NetworkTableInstance.getDefault().getTable("limelight").getEntry("ledMode").setNumber(1);
-    } 
-    if(JRight.getRawButton(10)){ // turn on vision processing
-      NetworkTableInstance.getDefault().getTable("limelight").getEntry("camMode").setNumber(0);
-      NetworkTableInstance.getDefault().getTable("limelight").getEntry("ledMode").setNumber(3);
-    }
-    if(JRight.getRawButton(7)){ // turn on/off LED
+    if(JRight.getRawButtonPressed(7)){ // turn on/off Vision Tracking
       if(ledStatus){ //turn off
         NetworkTableInstance.getDefault().getTable("limelight").getEntry("camMode").setNumber(1);
         NetworkTableInstance.getDefault().getTable("limelight").getEntry("ledMode").setNumber(1);
         ledStatus = false;
       } else { //turn on
-        NetworkTableInstance.getDefault().getTable("limelight").getEntry("camMode").setNumber(1);
+        NetworkTableInstance.getDefault().getTable("limelight").getEntry("camMode").setNumber(0);
         NetworkTableInstance.getDefault().getTable("limelight").getEntry("ledMode").setNumber(3);
         ledStatus = true;
       }
@@ -210,9 +203,9 @@ public class Robot extends TimedRobot {
   public void Update_Limelight_Tracking()
   {
         // These numbers must be tuned for your Robot!  Be careful!
-        final double STEER_P = 0.02/2;              // how hard to turn toward the target
-        final double DRIVE_P = 0.125;                    // how hard to drive fwd toward the target
-        final double DESIRED_TARGET_AREA = 4;       // Area of the target when the robot reaches the wall
+        final double STEER_P = 0.03/2;              // how hard to turn toward the target
+        final double DRIVE_P = 0.15;                    // how hard to drive fwd toward the target
+        final double DESIRED_TARGET_AREA = 3.75;       // Area of the target when the robot reaches the wall
         final double MAX_DRIVE = 0.75;                   // Simple speed limit so we don't drive too fast
         final double STEER_I = 0.15;
         final double DRIVE_I = .75;
