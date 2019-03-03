@@ -20,6 +20,8 @@ import edu.wpi.first.wpilibj.ADXRS450_Gyro;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import com.ctre.phoenix.motorcontrol.can.VictorSPX;
 import com.ctre.phoenix.motorcontrol.NeutralMode;
+import edu.wpi.first.wpilibj.XboxController;
+import edu.wpi.first.wpilibj.GenericHID.Hand;
 
 
 /**
@@ -70,17 +72,20 @@ public class Robot extends TimedRobot {
     final private double sprocketPitch =  1.79;
     double distance;
     double velocity; 
-  //Gyro
-  private ADXRS450_Gyro onboardGyro;
-  //Limelight
-  private boolean m_LimelightHasValidTarget = false;
-  private double m_LimelightDriveCommand = 0.0;
-  private double m_LimelightSteerCommand = 0.0;
+    //Gyro
+    private ADXRS450_Gyro onboardGyro;
+    //Limelight
+    private boolean m_LimelightHasValidTarget = false;
+    private double m_LimelightDriveCommand = 0.0;
+    private double m_LimelightSteerCommand = 0.0;
+    //LED
+    boolean ledStatus = true;
+    //togggle 
+    boolean toggleOn = false;
+    boolean togglePressed = false;
+    boolean btnPressed = false;
 
-  
-  boolean ledStatus = true;
-  boolean toggleOn = false;
-  boolean togglePressed = false;
+    double elevPosition;
     
   /**
    * This function is run when the robot is first started up and should be
@@ -251,61 +256,57 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void teleopPeriodic() {
-   
-      SmartDashboard.putNumber("Wrist Postion (encoder ticks): ", wristMaster.getSelectedSensorPosition(Constants.PID_PRIMARY));
-      SmartDashboard.putNumber("Elevator Postion (encoder ticks): ", elevLeftMaster.getSelectedSensorPosition(Constants.PID_PRIMARY));
-    
+    SmartDashboard.putNumber("Wrist Postion (encoder ticks): ", wristMaster.getSelectedSensorPosition(Constants.PID_PRIMARY));
+    SmartDashboard.putNumber("Elevator Postion (encoder ticks): ", elevLeftMaster.getSelectedSensorPosition(Constants.PID_PRIMARY));
     Update_Limelight_Tracking();
     updateToggle();
-      double driveForwardPower;
-      double turnPower;
+    double driveForwardPower;
+    double turnPower;
     //Drive Train Controls
-    if (driveJoy.getTrigger())
-        {
-          if (m_LimelightHasValidTarget)
-          {
-            //Limelight vision procesing control
-            SmartDashboard.putString("Valid Target", "True");
-            driveForwardPower = m_LimelightDriveCommand;
-            turnPower = m_LimelightSteerCommand;
-            rightMasterMotor1.set(ControlMode.PercentOutput, driveForwardPower+turnPower);
-            rightSlaveMotor2.follow(rightMasterMotor1);
-            rightSlaveMotor3.follow(rightMasterMotor1);
-            leftMasterMotor1.set(ControlMode.PercentOutput, driveForwardPower-turnPower);
-            leftSlaveMotor2.follow(leftMasterMotor1);
-            leftSlaveMotor3.follow(leftMasterMotor1);
-          }
-          else
-          {
-            SmartDashboard.putString("Valid Target", "False");
-          }
-        }
-        else
-        {
-          //Percent Control Mode
-            //Control Mode - Right side controlled by right joystick
-            rightMasterMotor1.set(ControlMode.PercentOutput, -driveJoy.getY() - driveJoy.getX()/2);
-            //Follow Master
-            rightSlaveMotor2.follow(rightMasterMotor1);
-            rightSlaveMotor3.follow(rightMasterMotor1);
-
-            //Control Mode - Left side conrolled by left joystick
-            leftMasterMotor1.set(ControlMode.PercentOutput, -driveJoy.getY() + driveJoy.getX()/2);
-            //Follow Master
-            leftSlaveMotor2.follow(leftMasterMotor1);
-            leftSlaveMotor3.follow(leftMasterMotor1);
-        }
-	  
-	if(toggleOn){
-        System.out.println("Elev Up");
+    if (driveJoy.getTrigger()){
+      if (m_LimelightHasValidTarget){
+        //Limelight vision procesing control
+        SmartDashboard.putString("Valid Target", "True");
+        driveForwardPower = m_LimelightDriveCommand;
+        turnPower = m_LimelightSteerCommand;
+        rightMasterMotor1.set(ControlMode.PercentOutput, driveForwardPower+turnPower);
+        rightSlaveMotor2.follow(rightMasterMotor1);
+        rightSlaveMotor3.follow(rightMasterMotor1);
+        leftMasterMotor1.set(ControlMode.PercentOutput, driveForwardPower-turnPower);
+        leftSlaveMotor2.follow(leftMasterMotor1);
+        leftSlaveMotor3.follow(leftMasterMotor1);
       } else {
-        System.out.println("Elev Stop");
+        SmartDashboard.putString("Valid Target", "False");
       }
-	  
-      if(JRight.getRawButton(6)){
+    } else {
+      //Arcade Drive
+      //Right
+      rightMasterMotor1.set(ControlMode.PercentOutput, -driveJoy.getY() - driveJoy.getX()/2);
+      rightSlaveMotor2.follow(rightMasterMotor1);
+      rightSlaveMotor3.follow(rightMasterMotor1);
+      //Left
+      leftMasterMotor1.set(ControlMode.PercentOutput, -driveJoy.getY() + driveJoy.getX()/2);
+      leftSlaveMotor2.follow(leftMasterMotor1);
+      leftSlaveMotor3.follow(leftMasterMotor1);
+    }
+    if(operatorController.getAButton()){
+      btnPressed = true;
+      elevPosition = Constants.elevBot;
+    } else {
+      btnPressed = false;
+    }
+    if(toggleOn){
+      System.out.println("Elev Up");
+    }else{
+      System.out.println("Elev Stop");
+    }
+    //Reset Gyro
+    if(driveJoy.getRawButton(6)){
       onboardGyro.reset();
     }
-    if(JRight.getRawButtonPressed(7)){ // turn on/off Vision Tracking
+
+    // turn on/off Vision Tracking
+    if(driveJoy.getRawButtonPressed(7)){
       if(ledStatus){ //turn off
         NetworkTableInstance.getDefault().getTable("limelight").getEntry("camMode").setNumber(1);
         NetworkTableInstance.getDefault().getTable("limelight").getEntry("ledMode").setNumber(1);
@@ -317,16 +318,14 @@ public class Robot extends TimedRobot {
       }
     }
     
-   
     //Intake
-      if(operatorController.getYButton()){
-        intakeMotor.set(ControlMode.PercentOutput, 1.0);
-      } else if(operatorController.getAButton()){
-        intakeMotor.set(ControlMode.PercentOutput, -1.0);
-      } else {
-        intakeMotor.set(ControlMode.PercentOutput, 0.0);
-      }
-    
+    if(operatorController.getYButton()){
+      intakeMotor.set(ControlMode.PercentOutput, 1.0);
+    } else if(operatorController.getAButton()){
+      intakeMotor.set(ControlMode.PercentOutput, -1.0);
+    } else {
+      intakeMotor.set(ControlMode.PercentOutput, 0.0);
+    }
   }
 
   /**
@@ -372,8 +371,7 @@ public class Robot extends TimedRobot {
    * This function implements a simple method of generating driving and steering commands
    * based on the tracking data from a limelight camera.
    */
-  public void Update_Limelight_Tracking()
-  {
+  public void Update_Limelight_Tracking() {
         final double STEER_P = 0.03/2;              // how hard to turn toward the target
         final double DRIVE_P = 0.15;                    // how hard to drive fwd toward the target
         final double DESIRED_TARGET_AREA = 3.75;       // Area of the target when the robot reaches the wall
@@ -433,14 +431,16 @@ public class Robot extends TimedRobot {
     double error = desiredAngle - curentAngle;
     integral = integral + (error*0.02);
     double turnCmd = (error * turn_kP) + (turn_kI * integral) ;
-    rightFirst.set(max_speed + turnCmd);
-    rightSecond.set(max_speed + turnCmd);
-    leftFirst.set(max_speed - turnCmd);
-    leftSecond.set(max_speed - turnCmd);
+    rightMasterMotor1.set(ControlMode.PercentOutput, max_speed + turnCmd);
+    rightSlaveMotor2.follow(rightMasterMotor1);
+    rightSlaveMotor3.follow(rightMasterMotor1);
+    leftMasterMotor1.set(ControlMode.PercentOutput, max_speed - turnCmd);
+    leftSlaveMotor2.follow(leftMasterMotor1);
+    leftSlaveMotor3.follow(leftMasterMotor1);
   }
  //toggle
   public void updateToggle(){
-    if(JRight.getRawButton(4)){
+    if(btnPressed){
       if (!(togglePressed)){
         toggleOn = !(toggleOn);
         togglePressed = true;
