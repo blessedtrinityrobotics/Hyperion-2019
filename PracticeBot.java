@@ -16,6 +16,7 @@ import edu.wpi.first.wpilibj.PWM;
 import edu.wpi.first.wpilibj.PWMSpeedController;
 import edu.wpi.first.wpilibj.VictorSP;
 import edu.wpi.first.wpilibj.GenericHID.Hand;
+import edu.wpi.first.wpilibj.interfaces.Gyro;
 import edu.wpi.first.wpilibj.SpeedController;
 import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.Joystick;
@@ -52,9 +53,11 @@ public class Robot extends TimedRobot {
   private boolean m_LimelightHasValidTarget = false;
   private double m_LimelightDriveCommand = 0.0;
   private double m_LimelightSteerCommand = 0.0;
-  boolean ledStatus = false;
+  
+  boolean ledStatus = true;
   boolean toggleOn = false;
   boolean togglePressed = false;
+
   
 
 
@@ -68,6 +71,9 @@ public class Robot extends TimedRobot {
     m_chooser.setDefaultOption("Default Auto", kDefaultAuto);
     m_chooser.addOption("My Auto", kCustomAuto);
     SmartDashboard.putData("Auto choices", m_chooser);
+    //Limelight LED and vision processing on
+    NetworkTableInstance.getDefault().getTable("limelight").getEntry("camMode").setNumber(0);
+    NetworkTableInstance.getDefault().getTable("limelight").getEntry("ledMode").setNumber(3);
 
     //Gyro
     onboardGyro = new  ADXRS450_Gyro();
@@ -138,12 +144,17 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void teleopPeriodic() {
+    boolean pressed = false;
     SmartDashboard.putNumber("Gyro:", onboardGyro.getAngle());
     Update_Limelight_Tracking();
+    updateToggle();
       double driveForwardPower;
       double turnPower;
       double skew = NetworkTableInstance.getDefault().getTable("limelight").getEntry("ts").getDouble(0);
-      SmartDashboard.putNumber("Skew", skew);
+      SmartDashboard.putNumber("Skew", skew); 
+      int counter1 = 0;
+      int counter2 = 0;
+      int counter3 = 0;
     //Drive Train Controls
     if (JRight.getTrigger()) {
       if (m_LimelightHasValidTarget) {
@@ -158,29 +169,45 @@ public class Robot extends TimedRobot {
       } else {
         SmartDashboard.putString("Valid Target", "False");
       }
-    } else if(JRight.getRawButton(3)){ //Drive Straight Forward
-      PIDControl(0, 1.0);
+    } else if(JRight.getRawButtonPressed(3) || pressed){ //Drive Straight Forward
+      pressed = true;
+      SmartDashboard.putBoolean("Pressed", pressed);
+      while(counter2 < 50000){
+        counter2++;
+        PIDControl(0, 1.0);      
+      }
+        pressed = false;
     } else if(JRight.getRawButton(2)){ //Drive Straight Backwards
-      PIDControl(0, -1.0);
-    } else if(JRight.getRawButton(4)){ //Turn Left 90 and continue driving straight
-      PIDControl(90, 1.0);
+      pressed = false;
+      while(counter1 < 30000){
+        counter1++;
+        PIDControl(0, 1.0);
+      }
+      while(counter3 < 30000){
+        counter3++;
+        SmartDashboard.putNumber("Counter", counter3);
+        PIDControl(50, 1.0);
+        NetworkTableInstance.getDefault().getTable("limelight").getEntry("camMode").setNumber(0);
+        NetworkTableInstance.getDefault().getTable("limelight").getEntry("ledMode").setNumber(3);
+        ledStatus = true;
+      }
     } else if(JRight.getRawButton(5)){ //Turn Right 90 and continue driving straight
-      PIDControl(-90, 1.0);
+      
     } else { //Arcade Drive
       rightFirst.set(-JRight.getY() - JRight.getX()/2);
       rightSecond.set(-JRight.getY() - JRight.getX()/2);
       leftFirst.set(-JRight.getY() + JRight.getX()/2);
       leftSecond.set(-JRight.getY() + JRight.getX()/2);
     }
-    if(operatorJoy.getAButton()){
+    
+      SmartDashboard.putBoolean("Toggle On ", toggleOn);
+      SmartDashboard.putBoolean("Toggle Pressed ", togglePressed);
       if(toggleOn){
-
+        System.out.print("Elev Up");
       } else {
-  
+        System.out.print("Elev Stop");
       }
-    } else {
-      togglePressed = false;
-    }
+    
 
     if(JRight.getRawButton(6)){
       onboardGyro.reset();
@@ -256,7 +283,7 @@ public class Robot extends TimedRobot {
         m_LimelightDriveCommand = drive_cmd;
     }
   
-  /** 
+/** 
 *
 * @param angle target angle
 * @param direction forward or backwards; 1.0 for forward, and -1.0 for backwards
@@ -264,8 +291,8 @@ public class Robot extends TimedRobot {
   public void PIDControl(int angle, double direction){
     double desiredAngle = angle;
     double max_speed = direction * 0.5;
-    double turn_kP = 0.01;
-    double turn_kI = 0.15;
+    double turn_kP = 0.025;
+    double turn_kI = 0.1;
     double integral = 0;
     double curentAngle = onboardGyro.getAngle();
     double error = desiredAngle - curentAngle;
@@ -276,12 +303,36 @@ public class Robot extends TimedRobot {
     leftFirst.set(max_speed - turnCmd);
     leftSecond.set(max_speed - turnCmd);
   }
-  
+
+  /** 
+*
+* @param angle target angle
+* @param direction forward or backwards; 1.0 for forward, and -1.0 for backwards
+*/
+public void turn180PID(int angle, double direction){
+  double desiredAngle = angle;
+  double max_speed = direction * 0.5;
+  double turn_kP = 0.01;
+  double turn_kI = 0.15;
+  double integral = 0;
+  double curentAngle = onboardGyro.getAngle();
+  double error = desiredAngle - curentAngle;
+  integral = integral + (error*0.02);
+  double turnCmd = (error * turn_kP) + (turn_kI * integral) ;
+  rightFirst.set(max_speed + turnCmd);
+  rightSecond.set(max_speed + turnCmd);
+  leftFirst.set(max_speed - turnCmd);
+  leftSecond.set(max_speed - turnCmd);
+}
   //toggle
   public void updateToggle(){
-      if(!togglePressed){
-        toggleOn = !toggleOn;
+    if(JRight.getRawButton(4)){
+      if (!(togglePressed)){
+        toggleOn = !(toggleOn);
         togglePressed = true;
       }
+    } else {
+      togglePressed = false;
+    }
   }
 }
