@@ -53,7 +53,8 @@ public class Robot extends TimedRobot {
   private double m_LimelightDriveCommand = 0.0;
   private double m_LimelightSteerCommand = 0.0;
   boolean ledStatus = false;
-
+  boolean toggleOn = false;
+  boolean togglePressed = false;
   
 
 
@@ -171,7 +172,15 @@ public class Robot extends TimedRobot {
       leftFirst.set(-JRight.getY() + JRight.getX()/2);
       leftSecond.set(-JRight.getY() + JRight.getX()/2);
     }
-    
+    if(operatorJoy.getAButton()){
+      if(toggleOn){
+
+      } else {
+  
+      }
+    } else {
+      togglePressed = false;
+    }
 
     if(JRight.getRawButton(6)){
       onboardGyro.reset();
@@ -266,5 +275,13 @@ public class Robot extends TimedRobot {
     rightSecond.set(max_speed + turnCmd);
     leftFirst.set(max_speed - turnCmd);
     leftSecond.set(max_speed - turnCmd);
+  }
+  
+  //toggle
+  public void updateToggle(){
+      if(!togglePressed){
+        toggleOn = !toggleOn;
+        togglePressed = true;
+      }
   }
 }
