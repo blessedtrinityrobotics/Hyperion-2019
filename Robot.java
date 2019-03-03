@@ -20,6 +20,7 @@ import edu.wpi.first.wpilibj.Joystick;
 import com.ctre.phoenix.motorcontrol.can.VictorSPX;
 import com.ctre.phoenix.motorcontrol.NeutralMode;
 
+
 /**
  * The VM is configured to automatically run this class, and to call the
  * functions corresponding to each mode, as described in the TimedRobot
@@ -55,8 +56,7 @@ public class Robot extends TimedRobot {
   //INTAKE
     VictorSPX intakeMotor       = new VictorSPX (14);
   //Joysticks
-    private Joystick leftJoy;
-    private Joystick rghtJoy;
+    private Joystick driveJoy;
     private XboxController operatorController;
 
   //Usually Variables
@@ -75,6 +75,11 @@ public class Robot extends TimedRobot {
   private boolean m_LimelightHasValidTarget = false;
   private double m_LimelightDriveCommand = 0.0;
   private double m_LimelightSteerCommand = 0.0;
+
+  
+  boolean ledStatus = true;
+  boolean toggleOn = false;
+  boolean togglePressed = false;
     
   /**
    * This function is run when the robot is first started up and should be
@@ -88,14 +93,13 @@ public class Robot extends TimedRobot {
     SmartDashboard.putData("Auto choices", m_chooser);
     
     //CONTROLLERS
-      leftJoy     = new Joystick(0);
-      rghtJoy     = new Joystick(1);  
-      operatorController = new XboxController(2); 
+      driveJoy     = new Joystick(0);
+      operatorController = new XboxController(1); 
     //END OF CONTROLLERS
   
     //GYRO
       onboardGyro = new  ADXRS450_Gyro();
-		  onboardGyro.calibrate();//Calibrates the gyro
+      onboardGyro.calibrate();//Calibrates the gyro
       onboardGyro.reset();//Sets gyro to 0 degrees
     //END OF GYRO
     
@@ -246,31 +250,16 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void teleopPeriodic() {
-    
-      double rightEncoderPos = rightMasterMotor1.getSelectedSensorPosition(Constants.PID_PRIMARY);
-      double rightEncoderVel = rightMasterMotor1.getSelectedSensorVelocity(Constants.PID_PRIMARY);
-      //double leftEncoderPos = leftMasterMotor1.getSelectedSensorPosition();
-    
-      //double cimRPM = 4500;
-      //double gearRatio = 6.23;
-      //velocity = (cimRPM/600)*(countPerRev/gearRatio);
-
-      distance = (rightEncoderPos * wheelCircumference)/countPerRev; 
-      
-
-      SmartDashboard.putNumber("Right Side Pos", distance);
-      SmartDashboard.putNumber("Right Side Vel", rightEncoderVel);
+   
       SmartDashboard.putNumber("Wrist Postion (encoder ticks): ", wristMaster.getSelectedSensorPosition(Constants.PID_PRIMARY));
       SmartDashboard.putNumber("Elevator Postion (encoder ticks): ", elevLeftMaster.getSelectedSensorPosition(Constants.PID_PRIMARY));
-
-      //SmartDashboard.putNumber("Max Velocity", velocity);
-      //System.out.println("Right Side Encoder Postion: " + distance);
     
     Update_Limelight_Tracking();
+    updateToggle();
       double driveForwardPower;
       double turnPower;
     //Drive Train Controls
-    if (leftJoy.getTrigger())
+    if (driveJoy.getTrigger())
         {
           if (m_LimelightHasValidTarget)
           {
@@ -294,31 +283,39 @@ public class Robot extends TimedRobot {
         {
           //Percent Control Mode
             //Control Mode - Right side controlled by right joystick
-            rightMasterMotor1.set(ControlMode.PercentOutput, rghtJoy.getY());
+            rightMasterMotor1.set(ControlMode.PercentOutput, -driveJoy.getY() - driveJoy.getX()/2);
             //Follow Master
             rightSlaveMotor2.follow(rightMasterMotor1);
             rightSlaveMotor3.follow(rightMasterMotor1);
 
             //Control Mode - Left side conrolled by left joystick
-            leftMasterMotor1.set(ControlMode.PercentOutput, leftJoy.getY());
+            leftMasterMotor1.set(ControlMode.PercentOutput, -driveJoy.getY() + driveJoy.getX()/2);
             //Follow Master
             leftSlaveMotor2.follow(leftMasterMotor1);
             leftSlaveMotor3.follow(leftMasterMotor1);
         }
-      //move elev up 50 inches
-      if(operatorJoy.getTrigger()){
-        MoveElevToTarget(50.0);
+	  
+	if(toggleOn){
+        System.out.println("Elev Up");
       } else {
-        elevLeftMaster.set(ControlMode.PercentOutput, operatorJoy.getY());
-        elevRightMaster.set(ControlMode.PercentOutput, operatorJoy.getY());
-        elevLeftSlave.follow(elevLeftMaster);
-        elevRightSlave.follow(elevRightMaster);
+        System.out.println("Elev Stop");
       }
-      
-      //move wrist 45 degrees
-      if(operatorJoy.getRawButtonPressed(2)){
-        MoveWristToAngle(-45);
+	  
+      if(JRight.getRawButton(6)){
+      onboardGyro.reset();
+    }
+    if(JRight.getRawButtonPressed(7)){ // turn on/off Vision Tracking
+      if(ledStatus){ //turn off
+        NetworkTableInstance.getDefault().getTable("limelight").getEntry("camMode").setNumber(1);
+        NetworkTableInstance.getDefault().getTable("limelight").getEntry("ledMode").setNumber(1);
+        ledStatus = false;
+      } else { //turn on
+        NetworkTableInstance.getDefault().getTable("limelight").getEntry("camMode").setNumber(0);
+        NetworkTableInstance.getDefault().getTable("limelight").getEntry("ledMode").setNumber(3);
+        ledStatus = true;
       }
+    }
+    
    
     //Intake
       if(operatorController.getYButton()){
@@ -376,16 +373,24 @@ public class Robot extends TimedRobot {
    */
   public void Update_Limelight_Tracking()
   {
-        // These numbers must be tuned for your Robot!  Be careful!
-        final double STEER_K = 0.5;              // how hard to turn toward the target
-        final double DRIVE_K = Constants.kGains_Distanc.kP;                    // how hard to drive fwd toward the target
-        final double DESIRED_TARGET_AREA = 13.0;        // Area of the target when the robot reaches the wall
-        final double MAX_DRIVE = 0.7;                   // Simple speed limit so we don't drive too fast
+        final double STEER_P = 0.03/2;              // how hard to turn toward the target
+        final double DRIVE_P = 0.15;                    // how hard to drive fwd toward the target
+        final double DESIRED_TARGET_AREA = 3.75;       // Area of the target when the robot reaches the wall
+        final double MAX_DRIVE = 0.75;                   // Simple speed limit so we don't drive too fast
+        final double STEER_I = 0.15;
+        final double DRIVE_I = .75;
+        final double xError;
+        final double aError;
+        double STEER_INTEGRAL = 0;
+        double DRIVE_INTEGRAL = 0;
 
         double tv = NetworkTableInstance.getDefault().getTable("limelight").getEntry("tv").getDouble(0);
         double tx = NetworkTableInstance.getDefault().getTable("limelight").getEntry("tx").getDouble(0);
-        double ty = NetworkTableInstance.getDefault().getTable("limelight").getEntry("ty").getDouble(0);
         double ta = NetworkTableInstance.getDefault().getTable("limelight").getEntry("ta").getDouble(0);
+        xError = tx;
+        aError = DESIRED_TARGET_AREA - ta;
+        STEER_INTEGRAL = STEER_INTEGRAL + (xError*0.02);
+        DRIVE_INTEGRAL = DRIVE_INTEGRAL + (aError * 0.02);
 
         if (tv < 1.0)
         {
@@ -398,11 +403,11 @@ public class Robot extends TimedRobot {
         m_LimelightHasValidTarget = true;
 
         // Start with proportional steering
-        double steer_cmd = tx * STEER_K;
+        double steer_cmd = (tx * STEER_P) + (STEER_INTEGRAL * STEER_I);
         m_LimelightSteerCommand = steer_cmd;
 
         // try to drive forward until the target area reaches our desired area
-        double drive_cmd = (DESIRED_TARGET_AREA - ta) * DRIVE_K;
+        double drive_cmd = (aError * DRIVE_P) + (DRIVE_INTEGRAL * DRIVE_I);
 
         // don't let the robot drive too fast into the goal
         if (drive_cmd > MAX_DRIVE)
@@ -411,6 +416,38 @@ public class Robot extends TimedRobot {
         }
         m_LimelightDriveCommand = drive_cmd;
     }
+	
+/** 
+*
+* @param angle target angle
+* @param direction forward or backwards; 1.0 for forward, and -1.0 for backwards
+*/
+  public void PIDControl(int angle, double direction){
+    double desiredAngle = angle;
+    double max_speed = direction * 0.5;
+    double turn_kP = 0.025;
+    double turn_kI = 0.1;
+    double integral = 0;
+    double curentAngle = onboardGyro.getAngle();
+    double error = desiredAngle - curentAngle;
+    integral = integral + (error*0.02);
+    double turnCmd = (error * turn_kP) + (turn_kI * integral) ;
+    rightFirst.set(max_speed + turnCmd);
+    rightSecond.set(max_speed + turnCmd);
+    leftFirst.set(max_speed - turnCmd);
+    leftSecond.set(max_speed - turnCmd);
+  }
+ //toggle
+  public void updateToggle(){
+    if(JRight.getRawButton(4)){
+      if (!(togglePressed)){
+        toggleOn = !(toggleOn);
+        togglePressed = true;
+      }
+    } else {
+      togglePressed = false;
+    }
+  }
 
 
 }
