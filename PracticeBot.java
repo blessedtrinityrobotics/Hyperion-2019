@@ -169,29 +169,11 @@ public class Robot extends TimedRobot {
       } else {
         SmartDashboard.putString("Valid Target", "False");
       }
-    } else if(JRight.getRawButtonPressed(3) || pressed){ //Drive Straight Forward
-      pressed = true;
-      SmartDashboard.putBoolean("Pressed", pressed);
-      while(counter2 < 50000){
-        counter2++;
-        PIDControl(0, 1.0);      
-      }
-        pressed = false;
-    } else if(JRight.getRawButton(2)){ //Drive Straight Backwards
-      pressed = false;
-      while(counter1 < 30000){
-        counter1++;
-        PIDControl(0, 1.0);
-      }
-      while(counter3 < 30000){
-        counter3++;
-        SmartDashboard.putNumber("Counter", counter3);
-        PIDControl(50, 1.0);
-        NetworkTableInstance.getDefault().getTable("limelight").getEntry("camMode").setNumber(0);
-        NetworkTableInstance.getDefault().getTable("limelight").getEntry("ledMode").setNumber(3);
-        ledStatus = true;
-      }
-    } else if(JRight.getRawButton(5)){ //Turn Right 90 and continue driving straight
+    } else if(JRight.getRawButtonPressed(3)){
+      
+    } else if(JRight.getRawButton(2)){ 
+     
+    } else if(JRight.getRawButton(5)){ 
       
     } else { //Arcade Drive
       rightFirst.set(-JRight.getY() - JRight.getX()/2);
@@ -203,9 +185,9 @@ public class Robot extends TimedRobot {
       SmartDashboard.putBoolean("Toggle On ", toggleOn);
       SmartDashboard.putBoolean("Toggle Pressed ", togglePressed);
       if(toggleOn){
-        System.out.print("Elev Up");
+        System.out.println("Elev Up");
       } else {
-        System.out.print("Elev Stop");
+        System.out.println("Elev Stop");
       }
     
 
