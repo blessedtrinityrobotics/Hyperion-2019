@@ -68,7 +68,7 @@ public class Robot extends TimedRobot {
     //wheel Radius
     final private double wheelRadius = 3;
     //Wheel Circumference
-    final private double wheelCircumference = 2* Math.PI * wheelRadius; //Circumference (in inches) (2*r*pi)
+    final private double wheelCircumference = 2 * Math.PI * wheelRadius; //Circumference (in inches) (2*r*pi)
     final private double sprocketPitch =  1.79;
     double distance;
     double velocity; 
@@ -259,7 +259,6 @@ public class Robot extends TimedRobot {
     SmartDashboard.putNumber("Wrist Postion (encoder ticks): ", wristMaster.getSelectedSensorPosition(Constants.PID_PRIMARY));
     SmartDashboard.putNumber("Elevator Postion (encoder ticks): ", elevLeftMaster.getSelectedSensorPosition(Constants.PID_PRIMARY));
     Update_Limelight_Tracking();
-    updateToggle();
     double driveForwardPower;
     double turnPower;
     //Drive Train Controls
@@ -289,17 +288,64 @@ public class Robot extends TimedRobot {
       leftSlaveMotor2.follow(leftMasterMotor1);
       leftSlaveMotor3.follow(leftMasterMotor1);
     }
+    //Elevator Bottom Position
     if(operatorController.getAButton()){
       btnPressed = true;
+      updateToggle();
       elevPosition = Constants.elevBot;
+      if(toggleOn){
+	MoveElevToTarget(elevPosition);
+      } else {
+	currentPos = getElevPosition();
+	MoveElevToRawPosition(currentPos);
+      }
     } else {
       btnPressed = false;
     }
-    if(toggleOn){
-      System.out.println("Elev Up");
-    }else{
-      System.out.println("Elev Stop");
+    //Elevator Low Position
+    if(operatorController.getBButton()){
+      btnPressed = true;
+      updateToggle();
+      elevPosition = Constants.elevLow;
+      if(toggleOn){
+	MoveElevToTarget(elevPosition);
+      } else {
+	currentPos = getElevPosition();
+	MoveElevToRawPosition(currentPos);
+      }
+    } else {
+      btnPressed = false;
     }
+    //Elevator Middle Position
+    if(operatorController.getYButton()){
+      btnPressed = true;
+      updateToggle();
+      elevPosition = Constants.elevMid;
+      if(toggleOn){
+	MoveElevToTarget(elevPosition);
+      } else {
+	currentPos = getElevPosition();
+	MoveElevToRawPosition(currentPos);
+      }
+    } else {
+      btnPressed = false;
+    }
+    //Elevator Top Position
+    if(operatorController.getXButton()){
+      btnPressed = true;
+      updateToggle();
+      elevPosition = Constants.elevTop;
+      if(toggleOn){
+	MoveElevToTarget(elevPosition);
+      } else {
+	currentPos = getElevPosition();
+	MoveElevToRawPosition(currentPos);
+      }
+    } else {
+      btnPressed = false;
+    }
+    
+    
     //Reset Gyro
     if(driveJoy.getRawButton(6)){
       onboardGyro.reset();
@@ -354,6 +400,13 @@ public class Robot extends TimedRobot {
     elevRightMaster.set(ControlMode.MotionMagic, setPoint);
     elevRightSlave.follow(elevRightMaster);
     elevLeftMaster.set(ControlMode.MotionMagic, setPoint);
+    elevLeftSlave.follow(elevLeftMaster);
+  }
+  //Move Elev set amount  - in talon native units
+  public void MoveElevToRawPosition(double position){
+    elevRightMaster.set(ControlMode.MotionMagic, position);
+    elevRightSlave.follow(elevRightMaster);
+    elevLeftMaster.set(ControlMode.MotionMagic, position);
     elevLeftSlave.follow(elevLeftMaster);
   }
 
@@ -449,6 +502,10 @@ public class Robot extends TimedRobot {
       togglePressed = false;
     }
   }
-
-
+//Get current elev postion
+public void getElevPosition(){
+    double rightPos = elevRightMaster.getSelectedSensorPosition(Constants.PID_PRIMARY);
+    double leftPos  = elevLeftMaster.getSelectedSensorPosition(Constants.PID_PRIMARY);
+    double elevPos = (rightPos + leftPos)/2;
+    return elevPos;
 }
