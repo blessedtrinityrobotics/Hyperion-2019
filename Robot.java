@@ -78,7 +78,7 @@ public class Robot extends TimedRobot {
     private boolean m_LimelightHasValidTarget = false;
     private double m_LimelightDriveCommand = 0.0;
     private double m_LimelightSteerCommand = 0.0;
-    //LED
+    //LED - Test to see if the light is on/off during auto?
     boolean ledStatus = true;
     //togggle 
     boolean toggleOn = false;
@@ -288,61 +288,46 @@ public class Robot extends TimedRobot {
       leftSlaveMotor2.follow(leftMasterMotor1);
       leftSlaveMotor3.follow(leftMasterMotor1);
     }
+    //Following if statements just set what position the elevator is supposed to go to
+    //It does not send a command to do so
     //Elevator Bottom Position
     if(operatorController.getAButton()){
       btnPressed = true;
-      updateToggle();
       elevPosition = Constants.elevBot;
-      if(toggleOn){
-	MoveElevToTarget(elevPosition);
-      } else {
-	currentPos = getElevPosition();
-	MoveElevToRawPosition(currentPos);
-      }
+      updateToggle();
     } else {
       btnPressed = false;
     }
     //Elevator Low Position
     if(operatorController.getBButton()){
       btnPressed = true;
-      updateToggle();
       elevPosition = Constants.elevLow;
-      if(toggleOn){
-	MoveElevToTarget(elevPosition);
-      } else {
-	currentPos = getElevPosition();
-	MoveElevToRawPosition(currentPos);
-      }
+      updateToggle();
     } else {
       btnPressed = false;
     }
     //Elevator Middle Position
     if(operatorController.getYButton()){
       btnPressed = true;
-      updateToggle();
       elevPosition = Constants.elevMid;
-      if(toggleOn){
-	MoveElevToTarget(elevPosition);
-      } else {
-	currentPos = getElevPosition();
-	MoveElevToRawPosition(currentPos);
-      }
+      updateToggle();
     } else {
       btnPressed = false;
     }
     //Elevator Top Position
     if(operatorController.getXButton()){
       btnPressed = true;
-      updateToggle();
       elevPosition = Constants.elevTop;
-      if(toggleOn){
-	MoveElevToTarget(elevPosition);
-      } else {
-	currentPos = getElevPosition();
-	MoveElevToRawPosition(currentPos);
-      }
+      updateToggle();
     } else {
       btnPressed = false;
+    }
+    //Actually commands the elevator to move
+    if(toggleOn){
+	MoveElevToTarget(elevPosition);
+    } else {
+	currentPos = getElevPosition();
+	MoveElevToRawPosition(currentPos);
     }
     
     
