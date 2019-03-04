@@ -84,14 +84,13 @@ public class Robot extends TimedRobot {
     SmartDashboard.putData("Auto choices", m_chooser);
     
     //CONTROLLERS
-      leftJoy     = new Joystick(0);
-      rghtJoy     = new Joystick(1);  
-      operatorController = new XboxController(2); 
+      driveJoy     = new Joystick(0);  
+      operatorController = new XboxController(1); 
     //END OF CONTROLLERS
     
     //GYRO
       onboardGyro = new  ADXRS450_Gyro();
-		  onboardGyro.calibrate();//Calibrates the gyro
+      onboardGyro.calibrate();//Calibrates the gyro
       onboardGyro.reset();//Sets gyro to 0 degrees
     //END OF GYRO
 
@@ -151,11 +150,7 @@ public class Robot extends TimedRobot {
       intakeMotor.setNeutralMode(NeutralMode.Brake);
     //END OF INTAKE
     
-/*
-    //Camera
-    UsbCamera camera = new UsbCamera("cam0", 0);
-        camera.setBrightness(50);
-    */
+
 
   }
 
@@ -215,7 +210,7 @@ public class Robot extends TimedRobot {
       double driveForwardPower;
       double turnPower;
     //Drive Train Controls
-    if (leftJoy.getTrigger())
+    if (driveJoy.getTrigger())
         {
           if (m_LimelightHasValidTarget)
           {
@@ -237,16 +232,14 @@ public class Robot extends TimedRobot {
         }
         else
         {
-          //Percent Control Mode
-            //Control Mode - Right side controlled by right joystick
-            rightMasterMotor1.set(ControlMode.PercentOutput, rghtJoy.getY());
-            //Follow Master
+          //Percent Control Mode w/ Arcade Drive
+            //Right
+            rightMasterMotor1.set(ControlMode.PercentOutput, -driveJoy.getY() - driveJoy.getX()/2);
             rightSlaveMotor2.follow(rightMasterMotor1);
             rightSlaveMotor3.follow(rightMasterMotor1);
 
-            //Control Mode - Left side conrolled by left joystick
-            leftMasterMotor1.set(ControlMode.PercentOutput, leftJoy.getY());
-            //Follow Master
+            //Left
+            leftMasterMotor1.set(ControlMode.PercentOutput, -driveJoy.getY() + driveJoy.getX()/2);
             leftSlaveMotor2.follow(leftMasterMotor1);
             leftSlaveMotor3.follow(leftMasterMotor1);
         }
@@ -285,15 +278,24 @@ public class Robot extends TimedRobot {
   public void Update_Limelight_Tracking()
   {
         // These numbers must be tuned for your Robot!  Be careful!
-        final double STEER_K = 0.5;              // how hard to turn toward the target
-        final double DRIVE_K = Constants.kGains_Distanc.kP;                    // how hard to drive fwd toward the target
-        final double DESIRED_TARGET_AREA = 13.0;        // Area of the target when the robot reaches the wall
-        final double MAX_DRIVE = 0.7;                   // Simple speed limit so we don't drive too fast
+        final double STEER_P = 0.03/2;              // how hard to turn toward the target
+        final double DRIVE_P = 0.15;                    // how hard to drive fwd toward the target
+        final double DESIRED_TARGET_AREA = 3.75;       // Area of the target when the robot reaches the wall
+        final double MAX_DRIVE = 0.75;                   // Simple speed limit so we don't drive too fast
+        final double STEER_I = 0.15;
+        final double DRIVE_I = .75;
+        final double xError;
+        final double aError;
+        double STEER_INTEGRAL = 0;
+        double DRIVE_INTEGRAL = 0;
 
         double tv = NetworkTableInstance.getDefault().getTable("limelight").getEntry("tv").getDouble(0);
         double tx = NetworkTableInstance.getDefault().getTable("limelight").getEntry("tx").getDouble(0);
-        double ty = NetworkTableInstance.getDefault().getTable("limelight").getEntry("ty").getDouble(0);
         double ta = NetworkTableInstance.getDefault().getTable("limelight").getEntry("ta").getDouble(0);
+        xError = tx;
+        aError = DESIRED_TARGET_AREA - ta;
+        STEER_INTEGRAL = STEER_INTEGRAL + (xError*0.02);
+        DRIVE_INTEGRAL = DRIVE_INTEGRAL + (aError * 0.02);
 
         if (tv < 1.0)
         {
@@ -306,11 +308,11 @@ public class Robot extends TimedRobot {
         m_LimelightHasValidTarget = true;
 
         // Start with proportional steering
-        double steer_cmd = tx * STEER_K;
+        double steer_cmd = (tx * STEER_P) + (STEER_INTEGRAL * STEER_I);
         m_LimelightSteerCommand = steer_cmd;
 
         // try to drive forward until the target area reaches our desired area
-        double drive_cmd = (DESIRED_TARGET_AREA - ta) * DRIVE_K;
+        double drive_cmd = (aError * DRIVE_P) + (DRIVE_INTEGRAL * DRIVE_I);
 
         // don't let the robot drive too fast into the goal
         if (drive_cmd > MAX_DRIVE)
@@ -319,5 +321,4 @@ public class Robot extends TimedRobot {
         }
         m_LimelightDriveCommand = drive_cmd;
     }
-
 }
