@@ -487,10 +487,11 @@ public class Robot extends TimedRobot {
       togglePressed = false;
     }
   }
-//Get current elev postion
-public void getElevPosition(){
+  //Get current elev postion
+  public void getElevPosition(){
     double rightPos = elevRightMaster.getSelectedSensorPosition(Constants.PID_PRIMARY);
     double leftPos  = elevLeftMaster.getSelectedSensorPosition(Constants.PID_PRIMARY);
     double elevPos = (rightPos + leftPos)/2;
     return elevPos;
+  }
 }
