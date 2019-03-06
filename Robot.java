@@ -86,6 +86,12 @@ public class Robot extends TimedRobot {
     boolean btnPressed = false;
 
     double elevPosition;
+    //Elev Limits
+    double elevBotLim = 0;
+    double elevTopLim =30000; //test for the real value
+    //Wrist Limits
+    double wristBotLim = -30000; //test for the real value
+    double wristTopLim = 0;
     
   /**
    * This function is run when the robot is first started up and should be
@@ -330,7 +336,11 @@ public class Robot extends TimedRobot {
 	MoveElevToRawPosition(currentPos);
     }
     
-    
+    if(wristMaster.getSelectedSensorPosition(Constants.PID_PRIMARY) >= -1000) {
+	    wristMaster.set(ControlMode.PercentOutput, 0);
+	    wristSlave.follow(wristMaster);
+    } else {
+	    wristMaster.set(ControlMode.MotionMagic, getWristPosition());
     //Reset Gyro
     if(driveJoy.getRawButton(6)){
       onboardGyro.reset();
@@ -488,10 +498,14 @@ public class Robot extends TimedRobot {
     }
   }
   //Get current elev postion
-  public void getElevPosition(){
+  public double getElevPosition(){
     double rightPos = elevRightMaster.getSelectedSensorPosition(Constants.PID_PRIMARY);
     double leftPos  = elevLeftMaster.getSelectedSensorPosition(Constants.PID_PRIMARY);
-    double elevPos = (rightPos + leftPos)/2;
+    double elevPos = (math.abs(rightPos) + math.abs(leftPos))/2;
     return elevPos;
   }
+  //Get current wrist positio 
+  public double getWristPosition() {
+    double wristPos = wristMaster.getSelectedSensorPosition(Constants.PID_PRIMARY):
+    return wristPos;
 }
