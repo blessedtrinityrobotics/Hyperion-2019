@@ -85,7 +85,7 @@ public class Robot extends TimedRobot {
     boolean togglePressed = false;
     boolean btnPressed = false;
 
-    double elevPosition;
+    double elevPosition = 0;
     //Elev Limits
     double elevBotLim = 1000; //test for the real value
     double elevTopLim =30000; 
