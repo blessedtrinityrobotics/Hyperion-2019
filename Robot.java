@@ -87,11 +87,11 @@ public class Robot extends TimedRobot {
 
     double elevPosition;
     //Elev Limits
-    double elevBotLim = 0;
-    double elevTopLim =30000; //test for the real value
+    double elevBotLim = 1000; //test for the real value
+    double elevTopLim =30000; 
     //Wrist Limits
     double wristBotLim = -30000; //test for the real value
-    double wristTopLim = 0;
+    double wristTopLim = -1000;
     
   /**
    * This function is run when the robot is first started up and should be
@@ -263,7 +263,8 @@ public class Robot extends TimedRobot {
   @Override
   public void teleopPeriodic() {
     SmartDashboard.putNumber("Wrist Postion (encoder ticks): ", wristMaster.getSelectedSensorPosition(Constants.PID_PRIMARY));
-    SmartDashboard.putNumber("Elevator Postion (encoder ticks): ", elevLeftMaster.getSelectedSensorPosition(Constants.PID_PRIMARY));
+    SmartDashboard.putNumber("Elev R Postion (encoder ticks): ", elevRightMaster.getSelectedSensorPosition(Constants.PID_PRIMARY));
+    SmartDashboard.putNumber("Elev L Postion (encoder ticks): ", elevLeftMaster.getSelectedSensorPosition(Constants.PID_PRIMARY));
     Update_Limelight_Tracking();
     double driveForwardPower;
     double turnPower;
@@ -336,11 +337,20 @@ public class Robot extends TimedRobot {
 	MoveElevToRawPosition(currentPos);
     }
     
-    if(wristMaster.getSelectedSensorPosition(Constants.PID_PRIMARY) >= -1000) {
-	    wristMaster.set(ControlMode.PercentOutput, 0);
-	    wristSlave.follow(wristMaster);
+    if(wristMaster.getSelectedSensorPosition(Constants.PID_PRIMARY) >= wristTopLim) {
+    	wristMaster.set(ControlMode.PercentOutput, 0);
+    	wristSlave.follow(wristMaster);
+	wristMaster.set(ControlMode.MotionMagic, wristTopLim - 500);
+    	wristSlave.follow(wristMaster);
+    } else if(wristMaster.getSelectedSensorPosition(Constants.PID_PRIMARY) <= wristBotLim) {
+    	wristMaster.set(ControlMode.PercentOutput, 0);
+    	wristSlave.follow(wristMaster);
+	wristMaster.set(ControlMode.MotionMagic, wristBotLim + 500);
+    	wristSlave.follow(wristMaster);
     } else {
-	    wristMaster.set(ControlMode.MotionMagic, getWristPosition());
+    	wristMaster.set(ControlMode.PercentOutput, operatorController.getY(Hand.kLeft));
+    	wristSlave.follow(wristMaster);
+    }
     //Reset Gyro
     if(driveJoy.getRawButton(6)){
       onboardGyro.reset();
@@ -504,7 +514,7 @@ public class Robot extends TimedRobot {
     double elevPos = (math.abs(rightPos) + math.abs(leftPos))/2;
     return elevPos;
   }
-  //Get current wrist positio 
+  //Get current wrist position 
   public double getWristPosition() {
     double wristPos = wristMaster.getSelectedSensorPosition(Constants.PID_PRIMARY):
     return wristPos;
