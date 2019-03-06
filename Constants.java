@@ -9,27 +9,29 @@ public class Constants {
 	 * Set to nonzero to wait and report to DS if action fails.
 	 */
 	public final static int kTimeoutMs = 30;
-	
+	//Elev peek sensor velocity 
+	public final static int kElevSensorVelocity  = 3410;
 	//Acceleration of Elevator in sensorUnitsPer100msPerSec
-	public final static int kElevAccel = 3410;
-
+	public final static int kElevAccel = kElevSensorVelocity/2;
 	//speed of Elevator in sensorUnitsPer100ms
-	public static int kElevVel = 3410;
-
+	public static int kElevVel = kElevSensorVelocity/2;
+	
+	//Wrist peek sensor velocity
+	public final static int kWristSensorVel = 399;
 	//Acceleration of wrist in sensorUnitsPer100msPerSec
-	public final static int kWristAccel = 139 ;
+	public final static int kWristAccel = kWristSensorVel/2 ;
 	//Speed of Elevator in sensorUnitsPer100ms
-	public final static int kWristVel = 139;
+	public final static int kWristVel = kWristSensorVel/2;
 
 	/**
 	 * PID Gains may have to be adjusted based on the responsiveness of control loop.
      * kF: 1023 represents output value to Talon at 100%, 6800 represents Velocity units at 100% output
      * Not all set of Gains are used in this project and may be removed as desired.
      * 
-	 * 	                                    			  kP   kI   kD   kF               Iz    PeakOut */
-	public final static Gains kGains_Distanc = new Gains( 0.1, 0.0,  0.0, 0.0,            100,  0.50 );
-	public final static Gains kGains_Elev    = new Gains( 0.0, 0.0,  0.0, 0.15,            500,  0.50 );
-	public final static Gains kGains_Wrist    = new Gains( 0.0, 0.0,  0.0, 3.67,            500,  0.50 );
+	 * 	                                    		kP   kI   kD   kF                       Iz    PeakOut */
+	public final static Gains kGains_Distanc = new Gains( 0.1, 0.0,  0.0, 0.0,                      100,  0.50 );
+	public final static Gains kGains_Elev    = new Gains( 0.0, 0.0,  0.0, 1023/kElevSensorVelocity, 500,  0.50 );
+	public final static Gains kGains_Wrist    = new Gains( 0.0, 0.0,  0.0, 1023/kWristSensorVel,    500,  0.50 );
 
 	
 	/** ---- Flat constants, you should not need to change these ---- */
