@@ -69,7 +69,8 @@ public class Robot extends TimedRobot {
     final private double wheelRadius = 3;
     //Wheel Circumference
     final private double wheelCircumference = 2 * Math.PI * wheelRadius; //Circumference (in inches) (2*r*pi)
-    final private double sprocketPitch =  1.79;
+    final private double sprocketPitchCircumference =  1.79 * Math.PI;
+    final private double armRatio = 44/18;
     double distance;
     double velocity; 
     //Gyro
@@ -84,14 +85,16 @@ public class Robot extends TimedRobot {
     boolean toggleOn = false;
     boolean togglePressed = false;
     boolean btnPressed = false;
+    //togggle wrist
+    boolean toggleOnWrist = false;
+    boolean togglePressedWrist = false;
+    boolean btnPressedWrist = false;
 
     double elevPosition = 0;
-    //Elev Limits
-    double elevBotLim = 1000; //test for the real value
-    double elevTopLim =30000; 
-    //Wrist Limits
-    double wristBotLim = -30000; //test for the real value
-    double wristTopLim = -1000;
+    double currentPos   = 0;
+
+    double wristPosition = 0;
+    double currentWristPos = 0;
     
   /**
    * This function is run when the robot is first started up and should be
@@ -100,8 +103,8 @@ public class Robot extends TimedRobot {
   
   @Override
   public void robotInit() {
-    m_chooser.setDefaultOption("Default Auto", kDefaultAuto);
-    m_chooser.addOption("My Auto", kCustomAuto);
+    //m_chooser.setDefaultOption("Default Auto", kDefaultAuto);
+    //m_chooser.addOption("My Auto", kCustomAuto);
     SmartDashboard.putData("Auto choices", m_chooser);
     
     //CONTROLLERS
@@ -161,8 +164,13 @@ public class Robot extends TimedRobot {
       elevLeftMaster.setNeutralMode(NeutralMode.Brake);
       elevLeftSlave .setNeutralMode(NeutralMode.Brake);
         //Encoder
-        elevLeftMaster.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Absolute, Constants.PID_PRIMARY, Constants.kTimeoutMs);
+        elevLeftMaster.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, Constants.PID_PRIMARY, Constants.kTimeoutMs);
         elevLeftMaster.setSensorPhase(true); //Reverse direction
+        elevLeftMaster.configForwardSoftLimitEnable(true, Constants.kTimeoutMs);
+        elevLeftMaster.configForwardSoftLimitThreshold(3600, Constants.kTimeoutMs);
+        elevLeftMaster.configReverseSoftLimitEnable(true, Constants.kTimeoutMs);
+        elevLeftMaster.configReverseSoftLimitThreshold(-15000, Constants.kTimeoutMs);
+
         //Config PID F Gains
         elevLeftMaster.config_kP(Constants.kSlot_Elev, Constants.kGains_Elev.kP, Constants.kTimeoutMs);
         elevLeftMaster.config_kI(Constants.kSlot_Elev, Constants.kGains_Elev.kI, Constants.kTimeoutMs);
@@ -172,12 +180,16 @@ public class Robot extends TimedRobot {
         elevLeftMaster.configMotionCruiseVelocity(Constants.kElevVel, Constants.kTimeoutMs);
       //Right
       elevRightMaster.setInverted(false); //Reverse direction
-      elevRightSlave .setInverted(false); //Reverse direction
+      elevRightSlave .setInverted(true); //Reverse direction
       elevRightMaster.setNeutralMode(NeutralMode.Brake);
       elevRightSlave .setNeutralMode(NeutralMode.Brake);
         //Encoder
-        elevRightMaster.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Absolute, Constants.PID_PRIMARY, Constants.kTimeoutMs);
+        elevRightMaster.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, Constants.PID_PRIMARY, Constants.kTimeoutMs);
         elevRightMaster.setSensorPhase(false); //Reverse direction
+        elevRightMaster.configForwardSoftLimitEnable(true, Constants.kTimeoutMs);
+        elevRightMaster.configForwardSoftLimitThreshold(3600, Constants.kTimeoutMs);
+        elevRightMaster.configReverseSoftLimitEnable(true, Constants.kTimeoutMs);
+        elevRightMaster.configReverseSoftLimitThreshold(-15000, Constants.kTimeoutMs);
         //Config PID F Gains
         elevRightMaster.config_kP(Constants.kSlot_Elev, Constants.kGains_Elev.kP, Constants.kTimeoutMs);
         elevRightMaster.config_kI(Constants.kSlot_Elev, Constants.kGains_Elev.kI, Constants.kTimeoutMs);
@@ -193,8 +205,12 @@ public class Robot extends TimedRobot {
       wristSlave .setInverted(true); //Reverse direction
       wristMaster.setNeutralMode(NeutralMode.Brake);
       wristSlave .setNeutralMode(NeutralMode.Brake);
+      elevRightMaster.configForwardSoftLimitEnable(true, Constants.kTimeoutMs);
+      elevRightMaster.configForwardSoftLimitThreshold(2000, Constants.kTimeoutMs);
+      elevRightMaster.configReverseSoftLimitEnable(true, Constants.kTimeoutMs);
+      elevRightMaster.configReverseSoftLimitThreshold(-550, Constants.kTimeoutMs);
         //Encoder
-        wristMaster.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Absolute, Constants.PID_PRIMARY, Constants.kTimeoutMs);
+        wristMaster.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, Constants.PID_PRIMARY, Constants.kTimeoutMs);
         wristMaster.setSensorPhase(true); //Reverse direction
         //Config PID F Gains
         wristMaster.config_kP(Constants.kSlot_Wrist, Constants.kGains_Wrist.kP, Constants.kTimeoutMs);
@@ -300,7 +316,7 @@ public class Robot extends TimedRobot {
     //Elevator Bottom Position
     if(operatorController.getAButton()){
       btnPressed = true;
-      elevPosition = Constants.elevBot;
+      elevPosition = Constants.elevBotGoal;
       updateToggle();
     } else {
       btnPressed = false;
@@ -308,7 +324,7 @@ public class Robot extends TimedRobot {
     //Elevator Low Position
     if(operatorController.getBButton()){
       btnPressed = true;
-      elevPosition = Constants.elevLow;
+      elevPosition = Constants.elevLowGoal;
       updateToggle();
     } else {
       btnPressed = false;
@@ -316,7 +332,7 @@ public class Robot extends TimedRobot {
     //Elevator Middle Position
     if(operatorController.getYButton()){
       btnPressed = true;
-      elevPosition = Constants.elevMid;
+      elevPosition = Constants.elevMidGoal;
       updateToggle();
     } else {
       btnPressed = false;
@@ -324,33 +340,47 @@ public class Robot extends TimedRobot {
     //Elevator Top Position
     if(operatorController.getXButton()){
       btnPressed = true;
-      elevPosition = Constants.elevTop;
+      elevPosition = Constants.elevTopGoal;
       updateToggle();
     } else {
       btnPressed = false;
     }
     //Actually commands the elevator to move
     if(toggleOn){
-	MoveElevToTarget(elevPosition);
+	    MoveElevToTarget(elevPosition);
     } else {
-	currentPos = getElevPosition();
-	MoveElevToRawPosition(currentPos);
+      currentPos = getElevPosition();
+      MoveElevToRawPosition(currentPos);
     }
     
-    if(wristMaster.getSelectedSensorPosition(Constants.PID_PRIMARY) >= wristTopLim) {
-    	wristMaster.set(ControlMode.PercentOutput, 0);
-    	wristSlave.follow(wristMaster);
-	wristMaster.set(ControlMode.MotionMagic, wristTopLim - 500);
-    	wristSlave.follow(wristMaster);
-    } else if(wristMaster.getSelectedSensorPosition(Constants.PID_PRIMARY) <= wristBotLim) {
-    	wristMaster.set(ControlMode.PercentOutput, 0);
-    	wristSlave.follow(wristMaster);
-	wristMaster.set(ControlMode.MotionMagic, wristBotLim + 500);
-    	wristSlave.follow(wristMaster);
+    //Following if statements just set what position the wrist is supposed to go to
+    //It does not send a command to do so
+    //Wrist Low Position
+    if(operatorController.getBumper(Hand.kLeft)){
+      btnPressedWrist = true;
+      wristPosition = Constants.wristDown;
+      updateToggleWrist();
     } else {
-    	wristMaster.set(ControlMode.PercentOutput, operatorController.getY(Hand.kLeft));
-    	wristSlave.follow(wristMaster);
+      btnPressedWrist = false;
     }
+    //Wrist 90 Position
+    if(operatorController.getBumper(Hand.kRight)){
+      btnPressedWrist = true;
+      wristPosition = Constants.wristStraight;
+      updateToggleWrist();
+    } else {
+      btnPressedWrist = false;
+    }
+    //Actually commands the wrist to move
+    if(toggleOnWrist){
+	    MoveWristToAngle(wristPosition);
+    } else {
+      currentWristPos = getWristPosition();
+      MoveWristToRawAngle(currentWristPos);
+    }
+
+    
+    
     //Reset Gyro
     if(driveJoy.getRawButton(6)){
       onboardGyro.reset();
@@ -400,7 +430,7 @@ public class Robot extends TimedRobot {
   public void MoveElevToTarget(double dist){
     double targetDist = dist; //Inches
     double setPoint;
-    setPoint = (dist * countPerRev)/sprocketPitch;
+    setPoint = (dist * countPerRev)/sprocketPitchCircumference;
     System.out.println("Button Pressed. Moving to: " + targetDist);
     elevRightMaster.set(ControlMode.MotionMagic, setPoint);
     elevRightSlave.follow(elevRightMaster);
@@ -415,15 +445,22 @@ public class Robot extends TimedRobot {
     elevLeftSlave.follow(elevLeftMaster);
   }
 
+  //Move wrist to raw postion - in degree
+  public void MoveWristToRawAngle(double angle){
+    wristMaster.set(ControlMode.MotionMagic, angle);
+    wristSlave.follow(wristMaster);
+  }
+
   //Move wrist to a postion - in degree
   public void MoveWristToAngle(double angle){
     double targetAngle = angle;
     double setPoint;
-    setPoint = (360 * countPerRev)/(angle);
+    setPoint = (angle/360)*(countPerRev * (armRatio));
     System.out.println("Button Pressed. Moving to angle: " + targetAngle);
     wristMaster.set(ControlMode.MotionMagic, setPoint);
     wristSlave.follow(wristMaster);
   }
+  
   
 /**
    * This function implements a simple method of generating driving and steering commands
@@ -507,15 +544,27 @@ public class Robot extends TimedRobot {
       togglePressed = false;
     }
   }
+  //toggle 2
+  public void updateToggleWrist(){
+    if(btnPressedWrist){
+      if (!(togglePressedWrist)){
+        toggleOnWrist = !(toggleOnWrist);
+        togglePressedWrist = true;
+      }
+    } else {
+      togglePressedWrist  = false;
+    }
+  }
   //Get current elev postion
   public double getElevPosition(){
     double rightPos = elevRightMaster.getSelectedSensorPosition(Constants.PID_PRIMARY);
     double leftPos  = elevLeftMaster.getSelectedSensorPosition(Constants.PID_PRIMARY);
-    double elevPos = (math.abs(rightPos) + math.abs(leftPos))/2;
+    double elevPos = (Math.abs(rightPos) + Math.abs(leftPos))/2;
     return elevPos;
   }
   //Get current wrist position 
   public double getWristPosition() {
-    double wristPos = wristMaster.getSelectedSensorPosition(Constants.PID_PRIMARY):
+    double wristPos = wristMaster.getSelectedSensorPosition(Constants.PID_PRIMARY);
     return wristPos;
+  }
 }
