@@ -22,7 +22,25 @@ public class Constants {
 	public final static int kWristAccel = kWristSensorVel/2 ;
 	//Speed of Elevator in sensorUnitsPer100ms
 	public final static int kWristVel = kWristSensorVel/2;
+	/**
+	 * Elevator Postion Targets
+	 * Top
+	 * Mid
+	 * Low
+	 * Bot
+	 */
+	public final static int elevTopGoal = 50;
+	public final static int elevMidGoal = 30;
+	public final static int elevLowGoal = 10;
+	public final static int elevBotGoal =  0;
 
+	/**
+	 * Wrist Targets
+	 * Straight
+	 * Low
+	 */
+	public static final int wristStraight = 90;
+	public static final int wristDown	  = 110;
 	/**
 	 * PID Gains may have to be adjusted based on the responsiveness of control loop.
      * kF: 1023 represents output value to Talon at 100%, 6800 represents Velocity units at 100% output
