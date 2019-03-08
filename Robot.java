@@ -269,6 +269,58 @@ public class Robot extends TimedRobot {
       case kDefaultAuto:
       default:
         // Put default auto code here
+        Update_Limelight_Tracking();
+        double driveForwardPower;
+        double turnPower;
+    //Drive Train Controls
+    if (driveJoy.getTrigger()){
+      if (m_LimelightHasValidTarget){
+        //Limelight vision procesing control
+        SmartDashboard.putString("Valid Target", "True");
+        driveForwardPower = m_LimelightDriveCommand;
+        turnPower = m_LimelightSteerCommand;
+        rightMasterMotor1.set(ControlMode.PercentOutput, driveForwardPower+turnPower);
+        rightSlaveMotor2.follow(rightMasterMotor1);
+        rightSlaveMotor3.follow(rightMasterMotor1);
+        leftMasterMotor1.set(ControlMode.PercentOutput, driveForwardPower-turnPower);
+        leftSlaveMotor2.follow(leftMasterMotor1);
+        leftSlaveMotor3.follow(leftMasterMotor1);
+      } else {
+        SmartDashboard.putString("Valid Target", "False");
+      }
+    } else {
+      //Arcade Drive
+      //Right
+      rightMasterMotor1.set(ControlMode.PercentOutput, -driveJoy.getY() - driveJoy.getX()/2);
+      rightSlaveMotor2.follow(rightMasterMotor1);
+      rightSlaveMotor3.follow(rightMasterMotor1);
+      //Left
+      leftMasterMotor1.set(ControlMode.PercentOutput, -driveJoy.getY() + driveJoy.getX()/2);
+      leftSlaveMotor2.follow(leftMasterMotor1);
+      leftSlaveMotor3.follow(leftMasterMotor1);
+    }
+		    
+      // turn on/off Vision Tracking
+    if(driveJoy.getRawButtonPressed(7)){
+      if(ledStatus){ //turn off
+        NetworkTableInstance.getDefault().getTable("limelight").getEntry("camMode").setNumber(1);
+        NetworkTableInstance.getDefault().getTable("limelight").getEntry("ledMode").setNumber(1);
+        ledStatus = false;
+      } else { //turn on
+        NetworkTableInstance.getDefault().getTable("limelight").getEntry("camMode").setNumber(0);
+        NetworkTableInstance.getDefault().getTable("limelight").getEntry("ledMode").setNumber(3);
+        ledStatus = true;
+      }
+    }
+    
+    //Intake
+    if(operatorController.getYButton()){
+      intakeMotor.set(ControlMode.PercentOutput, 1.0);
+    } else if(operatorController.getAButton()){
+      intakeMotor.set(ControlMode.PercentOutput, -1.0);
+    } else {
+      intakeMotor.set(ControlMode.PercentOutput, 0.0);
+    }
         break;
     }
   }
