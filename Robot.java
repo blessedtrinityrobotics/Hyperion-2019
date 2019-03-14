@@ -22,6 +22,9 @@ import com.ctre.phoenix.motorcontrol.can.VictorSPX;
 import com.ctre.phoenix.motorcontrol.NeutralMode;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.GenericHID.Hand;
+import edu.wpi.first.wpilibj.buttons.JoystickButton;
+
+
 
 
 /**
@@ -39,28 +42,47 @@ public class Robot extends TimedRobot {
   //Define Motors Controllers
   //DRIVE TRAIN
     //Right Side Motors
-    TalonSRX  rightMasterMotor1 = new TalonSRX  (3);
-    VictorSPX rightSlaveMotor2  = new VictorSPX (5);
-    VictorSPX rightSlaveMotor3  = new VictorSPX (7);
+    public TalonSRX  rightMasterMotor1 = new TalonSRX  (3);
+    public VictorSPX rightSlaveMotor2  = new VictorSPX (5);
+    public VictorSPX rightSlaveMotor3  = new VictorSPX (7);
     //Left Side Motors
-    TalonSRX  leftMasterMotor1  = new TalonSRX  (2);
-    VictorSPX leftSlaveMotor2   = new VictorSPX (4);
-    VictorSPX leftSlaveMotor3   = new VictorSPX (6);
+    public TalonSRX  leftMasterMotor1  = new TalonSRX  (2);
+    public VictorSPX leftSlaveMotor2   = new VictorSPX (4);
+    public VictorSPX leftSlaveMotor3   = new VictorSPX (6);
   //ELEVATOR
     //Left GB
-    TalonSRX  elevLeftMaster    = new TalonSRX  (8);
-    VictorSPX elevLeftSlave     = new VictorSPX (11);
+    public static TalonSRX  elevLeftMaster    = new TalonSRX  (8);
+    public static VictorSPX elevLeftSlave     = new VictorSPX (11);
     //Right GB
-    TalonSRX  elevRightMaster   = new TalonSRX  (9);
-    VictorSPX elevRightSlave    = new VictorSPX (10);
+    public static TalonSRX  elevRightMaster   = new TalonSRX  (9);
+    public static VictorSPX elevRightSlave    = new VictorSPX (10);
   //WRIST
-    TalonSRX  wristMaster       = new TalonSRX  (13);
-    VictorSPX wristSlave        = new VictorSPX (12);
+    public static TalonSRX  wristMaster       = new TalonSRX  (13);
+    public static VictorSPX wristSlave        = new VictorSPX (12);
   //INTAKE
-    VictorSPX intakeMotor       = new VictorSPX (14);
+    public static VictorSPX intakeMotor       = new VictorSPX (14);
   //Joysticks
-    private Joystick driveJoy;
-    private XboxController operatorController;
+    public static Joystick leftJoy;
+    public static Joystick rightJoy;
+    public static XboxController operatorController;
+    /**
+     * A Button - 1
+     * B Button - 2 
+     * X button - 3
+     * Y Button - 4
+     * Left Bumper - 5
+     * Right Bumber - 6
+     * Select Button - 7
+     * Start Button - 8
+     */
+    JoystickButton aButton      = new JoystickButton(operatorController, 1);
+    JoystickButton bButton      = new JoystickButton(operatorController, 2);
+    JoystickButton xButton      = new JoystickButton(operatorController,3);
+    JoystickButton yButton      = new JoystickButton(operatorController, 4);
+    JoystickButton LeftBumper   = new JoystickButton(operatorController, 5);
+    JoystickButton RightBumper  = new JoystickButton(operatorController, 6);
+
+
 
   //Usually Variables
     //Encoder Counts per Revolution
@@ -69,7 +91,7 @@ public class Robot extends TimedRobot {
     final private double wheelRadius = 3;
     //Wheel Circumference
     final private double wheelCircumference = 2 * Math.PI * wheelRadius; //Circumference (in inches) (2*r*pi)
-    final private double sprocketPitchCircumference =  1.79 * Math.PI;
+    final public static double sprocketPitchCircumference =  1.79 * Math.PI;
     final private double armRatio = 44/18;
     double distance;
     double velocity; 
@@ -81,20 +103,19 @@ public class Robot extends TimedRobot {
     private double m_LimelightSteerCommand = 0.0;
     //LED - Test to see if the light is on/off during auto?
     boolean ledStatus = true;
-    //togggle 
-    boolean toggleOn = false;
-    boolean togglePressed = false;
-    boolean btnPressed = false;
-    //togggle wrist
-    boolean toggleOnWrist = false;
-    boolean togglePressedWrist = false;
-    boolean btnPressedWrist = false;
+    
 
-    double elevPosition = 0;
-    double currentPos   = 0;
+    //Wrist Commands
+    MoveWrist wristIntake = new MoveWrist(Constants.wristDown);
+    MoveWrist wristRest   = new MoveWrist(Constants.wristStraight);
+    //Elevator Commands
+    MoveElev elevBot      = new MoveElev(Constants.elevBotGoal);
+    MoveElev elevLow      = new MoveElev(Constants.elevLowGoal);
+    MoveElev elevMid      = new MoveElev(Constants.elevMidGoal);
+    MoveElev elevTop      = new MoveElev(Constants.elevTopGoal);
 
-    double wristPosition = 0;
-    double currentWristPos = 0;
+
+
     
   /**
    * This function is run when the robot is first started up and should be
@@ -108,8 +129,9 @@ public class Robot extends TimedRobot {
     SmartDashboard.putData("Auto choices", m_chooser);
     
     //CONTROLLERS
-      driveJoy     = new Joystick(0);
-      operatorController = new XboxController(1); 
+      leftJoy            = new Joystick(0);
+      rightJoy           = new Joystick(1);
+      operatorController = new XboxController(2); 
     //END OF CONTROLLERS
   
     //GYRO
@@ -211,7 +233,7 @@ public class Robot extends TimedRobot {
       elevRightMaster.configReverseSoftLimitThreshold(-550, Constants.kTimeoutMs);
         //Encoder
         wristMaster.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, Constants.PID_PRIMARY, Constants.kTimeoutMs);
-        wristMaster.setSensorPhase(true); //Reverse direction
+        wristMaster.setSensorPhase(false); //Reverse direction
         //Config PID F Gains
         wristMaster.config_kP(Constants.kSlot_Wrist, Constants.kGains_Wrist.kP, Constants.kTimeoutMs);
         wristMaster.config_kI(Constants.kSlot_Wrist, Constants.kGains_Wrist.kI, Constants.kTimeoutMs);
@@ -268,59 +290,114 @@ public class Robot extends TimedRobot {
         break;
       case kDefaultAuto:
       default:
-        // Put default auto code here
-        Update_Limelight_Tracking();
-        double driveForwardPower;
-        double turnPower;
-    //Drive Train Controls
-    if (driveJoy.getTrigger()){
-      if (m_LimelightHasValidTarget){
-        //Limelight vision procesing control
-        SmartDashboard.putString("Valid Target", "True");
-        driveForwardPower = m_LimelightDriveCommand;
-        turnPower = m_LimelightSteerCommand;
-        rightMasterMotor1.set(ControlMode.PercentOutput, driveForwardPower+turnPower);
+      SmartDashboard.putNumber("Wrist Postion (encoder ticks): ", wristMaster.getSelectedSensorPosition(Constants.PID_PRIMARY));
+      SmartDashboard.putNumber("Elev R Postion (encoder ticks): ", elevRightMaster.getSelectedSensorPosition(Constants.PID_PRIMARY));
+      SmartDashboard.putNumber("Elev L Postion (encoder ticks): ", elevLeftMaster.getSelectedSensorPosition(Constants.PID_PRIMARY));
+      Update_Limelight_Tracking();
+      double driveForwardPower;
+      double turnPower;
+      if(wristIntake.isRunning() || wristRest.isRunning()){
+  
+      } else {
+        wristMaster.set(ControlMode.PercentOutput, operatorController.getY(Hand.kRight));
+        wristSlave.follow(wristMaster);
+      }
+  
+      if(elevBot.isRunning() || elevLow.isRunning() || elevMid.isRunning() || elevTop.isRunning()){
+  
+      } else {
+        elevLeftMaster.set(ControlMode.PercentOutput, operatorController.getY(Hand.kLeft));
+        elevLeftSlave.follow(elevLeftMaster);
+        elevRightMaster.set(ControlMode.PercentOutput, operatorController.getY(Hand.kLeft));
+        elevRightSlave.follow(elevRightMaster);
+      }
+  
+      //Drive Train Controls
+      if (leftJoy.getTrigger()){
+        if (m_LimelightHasValidTarget){
+          //Limelight vision procesing control
+          SmartDashboard.putString("Valid Target", "True");
+          driveForwardPower = m_LimelightDriveCommand;
+          turnPower = m_LimelightSteerCommand;
+          rightMasterMotor1.set(ControlMode.PercentOutput, driveForwardPower+turnPower);
+          rightSlaveMotor2.follow(rightMasterMotor1);
+          rightSlaveMotor3.follow(rightMasterMotor1);
+          leftMasterMotor1.set(ControlMode.PercentOutput, driveForwardPower-turnPower);
+          leftSlaveMotor2.follow(leftMasterMotor1);
+          leftSlaveMotor3.follow(leftMasterMotor1);
+        } else {
+          SmartDashboard.putString("Valid Target", "False");
+        }
+      } else {
+        //Arcade Drive
+        //Right
+        rightMasterMotor1.set(ControlMode.PercentOutput, -rightJoy.getY());
         rightSlaveMotor2.follow(rightMasterMotor1);
         rightSlaveMotor3.follow(rightMasterMotor1);
-        leftMasterMotor1.set(ControlMode.PercentOutput, driveForwardPower-turnPower);
+        //Left
+        leftMasterMotor1.set(ControlMode.PercentOutput, -leftJoy.getY());
         leftSlaveMotor2.follow(leftMasterMotor1);
         leftSlaveMotor3.follow(leftMasterMotor1);
-      } else {
-        SmartDashboard.putString("Valid Target", "False");
       }
-    } else {
-      //Arcade Drive
-      //Right
-      rightMasterMotor1.set(ControlMode.PercentOutput, -driveJoy.getY() - driveJoy.getX()/2);
-      rightSlaveMotor2.follow(rightMasterMotor1);
-      rightSlaveMotor3.follow(rightMasterMotor1);
-      //Left
-      leftMasterMotor1.set(ControlMode.PercentOutput, -driveJoy.getY() + driveJoy.getX()/2);
-      leftSlaveMotor2.follow(leftMasterMotor1);
-      leftSlaveMotor3.follow(leftMasterMotor1);
-    }
-		    
+      /**
+       * A Button - 1 - elevator Bottom Position
+       * B Button - 2  - elevator Low Position
+       * X button - 3 - elevator Mid Position
+       * Y Button - 4 - elevator Top Position
+       * Left Bumper - 5 - Wrist down to intake
+       * Right Bumber - 6 - Wrist up to resting position
+       * Select Button - 7
+       * Start Button - 8
+       */
+      //Active
+      LeftBumper.whenPressed(wristIntake);
+      RightBumper.whenPressed(wristRest);
+      aButton.whenPressed(elevBot);
+      bButton.whenPressed(elevLow);
+      xButton.whenPressed(elevMid);
+      yButton.whenPressed(elevTop);
+      //DeActivate
+      LeftBumper.cancelWhenPressed(wristRest);
+      RightBumper.cancelWhenPressed(wristIntake);
+      aButton.cancelWhenPressed(elevLow);
+      aButton.cancelWhenPressed(elevMid);
+      aButton.cancelWhenPressed(elevTop);
+      bButton.cancelWhenPressed(elevBot);
+      bButton.cancelWhenPressed(elevMid);
+      bButton.cancelWhenPressed(elevTop);
+      xButton.cancelWhenPressed(elevBot);
+      xButton.cancelWhenPressed(elevLow);
+      xButton.cancelWhenPressed(elevTop);
+      yButton.cancelWhenPressed(elevBot);
+      yButton.cancelWhenPressed(elevLow);
+      yButton.cancelWhenPressed(elevMid);
+  
+      //Reset Gyro
+      if(leftJoy.getRawButton(6)){
+        onboardGyro.reset();
+      }
+  
       // turn on/off Vision Tracking
-    if(driveJoy.getRawButtonPressed(7)){
-      if(ledStatus){ //turn off
-        NetworkTableInstance.getDefault().getTable("limelight").getEntry("camMode").setNumber(1);
-        NetworkTableInstance.getDefault().getTable("limelight").getEntry("ledMode").setNumber(1);
-        ledStatus = false;
-      } else { //turn on
-        NetworkTableInstance.getDefault().getTable("limelight").getEntry("camMode").setNumber(0);
-        NetworkTableInstance.getDefault().getTable("limelight").getEntry("ledMode").setNumber(3);
-        ledStatus = true;
+      if(leftJoy.getRawButtonPressed(7)){
+        if(ledStatus){ //turn off
+          NetworkTableInstance.getDefault().getTable("limelight").getEntry("camMode").setNumber(1);
+          NetworkTableInstance.getDefault().getTable("limelight").getEntry("ledMode").setNumber(1);
+          ledStatus = false;
+        } else { //turn on
+          NetworkTableInstance.getDefault().getTable("limelight").getEntry("camMode").setNumber(0);
+          NetworkTableInstance.getDefault().getTable("limelight").getEntry("ledMode").setNumber(3);
+          ledStatus = true;
+        }
       }
-    }
-    
-    //Intake
-    if(operatorController.getYButton()){
-      intakeMotor.set(ControlMode.PercentOutput, 1.0);
-    } else if(operatorController.getAButton()){
-      intakeMotor.set(ControlMode.PercentOutput, -1.0);
-    } else {
-      intakeMotor.set(ControlMode.PercentOutput, 0.0);
-    }
+      
+      //Intake
+      if(leftJoy.getRawButton(2)){
+        intakeMotor.set(ControlMode.PercentOutput, 0.75);
+      } else if(leftJoy.getRawButton(3)){
+        intakeMotor.set(ControlMode.PercentOutput, -0.5);
+      } else {
+        intakeMotor.set(ControlMode.PercentOutput, 0.2);
+      }
         break;
     }
   }
@@ -336,8 +413,24 @@ public class Robot extends TimedRobot {
     Update_Limelight_Tracking();
     double driveForwardPower;
     double turnPower;
+    if(wristIntake.isRunning() || wristRest.isRunning()){
+
+    } else {
+      wristMaster.set(ControlMode.PercentOutput, operatorController.getY(Hand.kRight));
+      wristSlave.follow(wristMaster);
+    }
+
+    if(elevBot.isRunning() || elevLow.isRunning() || elevMid.isRunning() || elevTop.isRunning()){
+
+    } else {
+      elevLeftMaster.set(ControlMode.PercentOutput, operatorController.getY(Hand.kLeft));
+      elevLeftSlave.follow(elevLeftMaster);
+      elevRightMaster.set(ControlMode.PercentOutput, operatorController.getY(Hand.kLeft));
+      elevRightSlave.follow(elevRightMaster);
+    }
+
     //Drive Train Controls
-    if (driveJoy.getTrigger()){
+    if (leftJoy.getTrigger()){
       if (m_LimelightHasValidTarget){
         //Limelight vision procesing control
         SmartDashboard.putString("Valid Target", "True");
@@ -355,91 +448,54 @@ public class Robot extends TimedRobot {
     } else {
       //Arcade Drive
       //Right
-      rightMasterMotor1.set(ControlMode.PercentOutput, -driveJoy.getY() - driveJoy.getX()/2);
+      rightMasterMotor1.set(ControlMode.PercentOutput, -rightJoy.getY());
       rightSlaveMotor2.follow(rightMasterMotor1);
       rightSlaveMotor3.follow(rightMasterMotor1);
       //Left
-      leftMasterMotor1.set(ControlMode.PercentOutput, -driveJoy.getY() + driveJoy.getX()/2);
+      leftMasterMotor1.set(ControlMode.PercentOutput, -leftJoy.getY());
       leftSlaveMotor2.follow(leftMasterMotor1);
       leftSlaveMotor3.follow(leftMasterMotor1);
     }
-    //Following if statements just set what position the elevator is supposed to go to
-    //It does not send a command to do so
-    //Elevator Bottom Position
-    if(operatorController.getAButton()){
-      btnPressed = true;
-      elevPosition = Constants.elevBotGoal;
-      updateToggle();
-    } else {
-      btnPressed = false;
-    }
-    //Elevator Low Position
-    if(operatorController.getBButton()){
-      btnPressed = true;
-      elevPosition = Constants.elevLowGoal;
-      updateToggle();
-    } else {
-      btnPressed = false;
-    }
-    //Elevator Middle Position
-    if(operatorController.getYButton()){
-      btnPressed = true;
-      elevPosition = Constants.elevMidGoal;
-      updateToggle();
-    } else {
-      btnPressed = false;
-    }
-    //Elevator Top Position
-    if(operatorController.getXButton()){
-      btnPressed = true;
-      elevPosition = Constants.elevTopGoal;
-      updateToggle();
-    } else {
-      btnPressed = false;
-    }
-    //Actually commands the elevator to move
-    if(toggleOn){
-	    MoveElevToTarget(elevPosition);
-    } else {
-      currentPos = getElevPosition();
-      MoveElevToRawPosition(currentPos);
-    }
-    
-    //Following if statements just set what position the wrist is supposed to go to
-    //It does not send a command to do so
-    //Wrist Low Position
-    if(operatorController.getBumper(Hand.kLeft)){
-      btnPressedWrist = true;
-      wristPosition = Constants.wristDown;
-      updateToggleWrist();
-    } else {
-      btnPressedWrist = false;
-    }
-    //Wrist 90 Position
-    if(operatorController.getBumper(Hand.kRight)){
-      btnPressedWrist = true;
-      wristPosition = Constants.wristStraight;
-      updateToggleWrist();
-    } else {
-      btnPressedWrist = false;
-    }
-    //Actually commands the wrist to move
-    if(toggleOnWrist){
-	    MoveWristToAngle(wristPosition);
-    } else {
-      currentWristPos = getWristPosition();
-      MoveWristToRawAngle(currentWristPos);
-    }
+    /**
+     * A Button - 1 - elevator Bottom Position
+     * B Button - 2  - elevator Low Position
+     * X button - 3 - elevator Mid Position
+     * Y Button - 4 - elevator Top Position
+     * Left Bumper - 5 - Wrist down to intake
+     * Right Bumber - 6 - Wrist up to resting position
+     * Select Button - 7
+     * Start Button - 8
+     */
+    //Active
+    LeftBumper.whenPressed(wristIntake);
+    RightBumper.whenPressed(wristRest);
+    aButton.whenPressed(elevBot);
+    bButton.whenPressed(elevLow);
+    xButton.whenPressed(elevMid);
+    yButton.whenPressed(elevTop);
+    //DeActivate
+    LeftBumper.cancelWhenPressed(wristRest);
+    RightBumper.cancelWhenPressed(wristIntake);
+    aButton.cancelWhenPressed(elevLow);
+    aButton.cancelWhenPressed(elevMid);
+    aButton.cancelWhenPressed(elevTop);
+    bButton.cancelWhenPressed(elevBot);
+    bButton.cancelWhenPressed(elevMid);
+    bButton.cancelWhenPressed(elevTop);
+    xButton.cancelWhenPressed(elevBot);
+    xButton.cancelWhenPressed(elevLow);
+    xButton.cancelWhenPressed(elevTop);
+    yButton.cancelWhenPressed(elevBot);
+    yButton.cancelWhenPressed(elevLow);
+    yButton.cancelWhenPressed(elevMid);
 
-    
-    
     //Reset Gyro
-    if(driveJoy.getRawButton(6)){
+    if(leftJoy.getRawButton(6)){
       onboardGyro.reset();
     }
 
     // turn on/off Vision Tracking
-    if(driveJoy.getRawButtonPressed(7)){
+    if(leftJoy.getRawButtonPressed(7)){
       if(ledStatus){ //turn off
         NetworkTableInstance.getDefault().getTable("limelight").getEntry("camMode").setNumber(1);
         NetworkTableInstance.getDefault().getTable("limelight").getEntry("ledMode").setNumber(1);
@@ -452,12 +508,12 @@ public class Robot extends TimedRobot {
     }
     
     //Intake
-    if(operatorController.getYButton()){
-      intakeMotor.set(ControlMode.PercentOutput, 1.0);
-    } else if(operatorController.getAButton()){
-      intakeMotor.set(ControlMode.PercentOutput, -1.0);
+    if(leftJoy.getRawButton(2)){
+      intakeMotor.set(ControlMode.PercentOutput, 0.75);
+    } else if(leftJoy.getRawButton(3)){
+      intakeMotor.set(ControlMode.PercentOutput, -0.5);
     } else {
-      intakeMotor.set(ControlMode.PercentOutput, 0.0);
+      intakeMotor.set(ControlMode.PercentOutput, 0.2);
     }
   }
 
@@ -585,38 +641,6 @@ public class Robot extends TimedRobot {
     leftSlaveMotor2.follow(leftMasterMotor1);
     leftSlaveMotor3.follow(leftMasterMotor1);
   }
- //toggle
-  public void updateToggle(){
-    if(btnPressed){
-      if (!(togglePressed)){
-        toggleOn = !(toggleOn);
-        togglePressed = true;
-      }
-    } else {
-      togglePressed = false;
-    }
-  }
-  //toggle 2
-  public void updateToggleWrist(){
-    if(btnPressedWrist){
-      if (!(togglePressedWrist)){
-        toggleOnWrist = !(toggleOnWrist);
-        togglePressedWrist = true;
-      }
-    } else {
-      togglePressedWrist  = false;
-    }
-  }
-  //Get current elev postion
-  public double getElevPosition(){
-    double rightPos = elevRightMaster.getSelectedSensorPosition(Constants.PID_PRIMARY);
-    double leftPos  = elevLeftMaster.getSelectedSensorPosition(Constants.PID_PRIMARY);
-    double elevPos = (Math.abs(rightPos) + Math.abs(leftPos))/2;
-    return elevPos;
-  }
-  //Get current wrist position 
-  public double getWristPosition() {
-    double wristPos = wristMaster.getSelectedSensorPosition(Constants.PID_PRIMARY);
-    return wristPos;
-  }
+ 
+ 
 }
