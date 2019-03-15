@@ -9,19 +9,30 @@ public class Constants {
 	 * Set to nonzero to wait and report to DS if action fails.
 	 */
 	public final static int kTimeoutMs = 30;
+
 	//Elev peek sensor velocity 
 	public final static int kElevSensorVelocity  = 3410;
 	//Acceleration of Elevator in sensorUnitsPer100msPerSec
-	public final static int kElevAccel = kElevSensorVelocity/2;
+	public final static int kElevAccel 			 = kElevSensorVelocity/2;
 	//speed of Elevator in sensorUnitsPer100ms
-	public static int kElevVel = kElevSensorVelocity/2;
+	public static int kElevVel 					 = kElevSensorVelocity/2;
 	
 	//Wrist peek sensor velocity
 	public final static int kWristSensorVel = 399;
 	//Acceleration of wrist in sensorUnitsPer100msPerSec
-	public final static int kWristAccel = kWristSensorVel/2 ;
+	public final static int kWristAccel 	= kWristSensorVel/2 ;
 	//Speed of Elevator in sensorUnitsPer100ms
-	public final static int kWristVel = kWristSensorVel/2;
+	public final static int kWristVel 	 	= kWristSensorVel/2;
+
+
+	//Climb peek sensor velocity
+	public final static int kClimbSensorVelocity = 0;
+
+	//Acceleration of climb in sensorUnitsPer100msPerSec
+	public final static int kClimbAccel 		 = kClimbSensorVelocity/2;
+
+	//speed of climb in sensorUnitsPer100ms
+	public static int kClimbVel 				 = kClimbSensorVelocity/2;
 	/**
 	 * Elevator Postion Targets
 	 * Top
@@ -41,15 +52,24 @@ public class Constants {
 	 */
 	public static final int wristStraight = 90;
 	public static final int wristDown	  = 110;
+
+	/** 
+	 * Climb Targets
+	 * Extend
+	 * Retract
+	 */
+	public static final int climbExtend = 100;
+	public static final int climbRetract = 0;
 	/**
 	 * PID Gains may have to be adjusted based on the responsiveness of control loop.
      * kF: 1023 represents output value to Talon at 100%, 6800 represents Velocity units at 100% output
      * Not all set of Gains are used in this project and may be removed as desired.
      * 
-	 * 	                                    		kP   kI   kD   kF                       Iz    PeakOut */
+	 * 	                                    				kP   kI   kD   kF                       Iz    PeakOut */
 	public final static Gains kGains_Distanc = new Gains( 0.1, 0.0,  0.0, 0.0,                      100,  0.50 );
 	public final static Gains kGains_Elev    = new Gains( 0.0, 0.0,  0.0, 1023/kElevSensorVelocity, 500,  0.50 );
-	public final static Gains kGains_Wrist    = new Gains( 0.0, 0.0,  0.0, 1023/kWristSensorVel,    500,  0.50 );
+	public final static Gains kGains_Wrist   = new Gains( 0.0, 0.0,  0.0, 1023/kWristSensorVel,     500,  0.50 );
+	public final static Gains kGains_Climb   = new Gains( 0.0, 0.0,  0.0, 0.0, 						500,  0.50 );
 
 	
 	/** ---- Flat constants, you should not need to change these ---- */
@@ -68,4 +88,5 @@ public class Constants {
 	public final static int kSlot_Distanc = SLOT_0;
 	public final static int kSlot_Elev = SLOT_1;
 	public final static int kSlot_Wrist = SLOT_2;
+	public final static int kSlot_Climb = SLOT_3;
 }
