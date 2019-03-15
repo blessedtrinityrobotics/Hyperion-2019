@@ -23,6 +23,7 @@ import com.ctre.phoenix.motorcontrol.NeutralMode;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.GenericHID.Hand;
 import edu.wpi.first.wpilibj.buttons.JoystickButton;
+import edu.wpi.first.wpilibj.command.Scheduler;
 
 
 
@@ -61,6 +62,9 @@ public class Robot extends TimedRobot {
     public static VictorSPX wristSlave        = new VictorSPX (12);
   //INTAKE
     public static VictorSPX intakeMotor       = new VictorSPX (14);
+  //Climbing
+    public static TalonSRX  climbMotorMaster  = new TalonSRX(15);
+    public static VictorSPX climbMotorSlave   = new VictorSPX(16);
   //Joysticks
     public static Joystick leftJoy;
     public static Joystick rightJoy;
@@ -81,6 +85,8 @@ public class Robot extends TimedRobot {
     JoystickButton yButton      = new JoystickButton(operatorController, 4);
     JoystickButton LeftBumper   = new JoystickButton(operatorController, 5);
     JoystickButton RightBumper  = new JoystickButton(operatorController, 6);
+    JoystickButton rightTrigger = new JoystickButton(rightJoy, 1);    
+    JoystickButton button2      = new JoystickButton(rightJoy, 2);                                                                                                                                                          
 
 
 
@@ -103,16 +109,18 @@ public class Robot extends TimedRobot {
     private double m_LimelightSteerCommand = 0.0;
     //LED - Test to see if the light is on/off during auto?
     boolean ledStatus = true;
-    
 
     //Wrist Commands
-    MoveWrist wristIntake = new MoveWrist(Constants.wristDown);
-    MoveWrist wristRest   = new MoveWrist(Constants.wristStraight);
+    MoveWrist wristIntake  = new MoveWrist(Constants.wristDown);
+    MoveWrist wristRest    = new MoveWrist(Constants.wristStraight);
     //Elevator Commands
-    MoveElev elevBot      = new MoveElev(Constants.elevBotGoal);
-    MoveElev elevLow      = new MoveElev(Constants.elevLowGoal);
-    MoveElev elevMid      = new MoveElev(Constants.elevMidGoal);
-    MoveElev elevTop      = new MoveElev(Constants.elevTopGoal);
+    MoveElev elevBot       = new MoveElev(Constants.elevBotGoal);
+    MoveElev elevLow       = new MoveElev(Constants.elevLowGoal);
+    MoveElev elevMid       = new MoveElev(Constants.elevMidGoal);
+    MoveElev elevTop       = new MoveElev(Constants.elevTopGoal);
+    //Climb Commands
+    MoveClimb extendClimb  = new MoveClimb(Constants.climbExtend);
+    MoveClimb retractClimb = new MoveClimb(Constants.climbRetract);
 
 
 
@@ -188,16 +196,13 @@ public class Robot extends TimedRobot {
         //Encoder
         elevLeftMaster.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, Constants.PID_PRIMARY, Constants.kTimeoutMs);
         elevLeftMaster.setSensorPhase(true); //Reverse direction
-        elevLeftMaster.configForwardSoftLimitEnable(true, Constants.kTimeoutMs);
-        elevLeftMaster.configForwardSoftLimitThreshold(3600, Constants.kTimeoutMs);
-        elevLeftMaster.configReverseSoftLimitEnable(true, Constants.kTimeoutMs);
-        elevLeftMaster.configReverseSoftLimitThreshold(-15000, Constants.kTimeoutMs);
 
         //Config PID F Gains
         elevLeftMaster.config_kP(Constants.kSlot_Elev, Constants.kGains_Elev.kP, Constants.kTimeoutMs);
         elevLeftMaster.config_kI(Constants.kSlot_Elev, Constants.kGains_Elev.kI, Constants.kTimeoutMs);
         elevLeftMaster.config_kD(Constants.kSlot_Elev, Constants.kGains_Elev.kD, Constants.kTimeoutMs);
         elevLeftMaster.config_kF(Constants.kSlot_Elev, Constants.kGains_Elev.kF, Constants.kTimeoutMs);
+        elevLeftMaster.configClosedLoopPeakOutput(Constants.kSlot_Elev, Constants.kGains_Elev.kPeakOutput);
         elevLeftMaster.configMotionAcceleration(Constants.kElevAccel, Constants.kTimeoutMs);
         elevLeftMaster.configMotionCruiseVelocity(Constants.kElevVel, Constants.kTimeoutMs);
       //Right
@@ -209,14 +214,12 @@ public class Robot extends TimedRobot {
         elevRightMaster.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, Constants.PID_PRIMARY, Constants.kTimeoutMs);
         elevRightMaster.setSensorPhase(false); //Reverse direction
         elevRightMaster.configForwardSoftLimitEnable(true, Constants.kTimeoutMs);
-        elevRightMaster.configForwardSoftLimitThreshold(3600, Constants.kTimeoutMs);
-        elevRightMaster.configReverseSoftLimitEnable(true, Constants.kTimeoutMs);
-        elevRightMaster.configReverseSoftLimitThreshold(-15000, Constants.kTimeoutMs);
         //Config PID F Gains
         elevRightMaster.config_kP(Constants.kSlot_Elev, Constants.kGains_Elev.kP, Constants.kTimeoutMs);
         elevRightMaster.config_kI(Constants.kSlot_Elev, Constants.kGains_Elev.kI, Constants.kTimeoutMs);
         elevRightMaster.config_kD(Constants.kSlot_Elev, Constants.kGains_Elev.kD, Constants.kTimeoutMs);
         elevRightMaster.config_kF(Constants.kSlot_Elev, Constants.kGains_Elev.kF, Constants.kTimeoutMs);
+        elevRightMaster.configClosedLoopPeakOutput(Constants.kSlot_Elev, Constants.kGains_Elev.kPeakOutput);
         elevRightMaster.configMotionAcceleration(Constants.kElevAccel, Constants.kTimeoutMs);
         elevRightMaster.configMotionCruiseVelocity(Constants.kElevVel, Constants.kTimeoutMs);
     //END OF ELEVATOR
@@ -227,10 +230,6 @@ public class Robot extends TimedRobot {
       wristSlave .setInverted(true); //Reverse direction
       wristMaster.setNeutralMode(NeutralMode.Brake);
       wristSlave .setNeutralMode(NeutralMode.Brake);
-      elevRightMaster.configForwardSoftLimitEnable(true, Constants.kTimeoutMs);
-      elevRightMaster.configForwardSoftLimitThreshold(2000, Constants.kTimeoutMs);
-      elevRightMaster.configReverseSoftLimitEnable(true, Constants.kTimeoutMs);
-      elevRightMaster.configReverseSoftLimitThreshold(-550, Constants.kTimeoutMs);
         //Encoder
         wristMaster.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, Constants.PID_PRIMARY, Constants.kTimeoutMs);
         wristMaster.setSensorPhase(false); //Reverse direction
@@ -239,6 +238,7 @@ public class Robot extends TimedRobot {
         wristMaster.config_kI(Constants.kSlot_Wrist, Constants.kGains_Wrist.kI, Constants.kTimeoutMs);
         wristMaster.config_kD(Constants.kSlot_Wrist, Constants.kGains_Wrist.kD, Constants.kTimeoutMs);
         wristMaster.config_kF(Constants.kSlot_Wrist, Constants.kGains_Wrist.kF, Constants.kTimeoutMs);
+        wristMaster.configClosedLoopPeakOutput(Constants.kSlot_Wrist, Constants.kGains_Wrist.kPeakOutput);
         wristMaster.configMotionAcceleration(Constants.kWristAccel, Constants.kTimeoutMs);
         wristMaster.configMotionCruiseVelocity(Constants.kWristVel, Constants.kTimeoutMs);
     //END OF WRIST
@@ -247,6 +247,25 @@ public class Robot extends TimedRobot {
       intakeMotor.setInverted(true);
       intakeMotor.setNeutralMode(NeutralMode.Brake);
     //END OF INTAKE
+
+    //Climbing
+      climbMotorMaster.setInverted(false);
+      climbMotorSlave.setInverted(false);
+      climbMotorMaster.setNeutralMode(NeutralMode.Brake);
+      climbMotorSlave.setNeutralMode(NeutralMode.Brake);
+        //Encoder
+        climbMotorMaster.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, Constants.PID_PRIMARY, Constants.kTimeoutMs);
+        climbMotorMaster.setSensorPhase(false);
+        //Config PID F Gains
+        climbMotorMaster.config_kP(Constants.kSlot_Climb, Constants.kGains_Climb.kP, Constants.kTimeoutMs);
+        climbMotorMaster.config_kI(Constants.kSlot_Climb, Constants.kGains_Climb.kI, Constants.kTimeoutMs);
+        climbMotorMaster.config_kD(Constants.kSlot_Climb, Constants.kGains_Climb.kD, Constants.kTimeoutMs);
+        climbMotorMaster.config_kF(Constants.kSlot_Climb, Constants.kGains_Climb.kF, Constants.kTimeoutMs);
+        climbMotorMaster.configClosedLoopPeakOutput(Constants.kSlot_Climb, Constants.kGains_Climb.kPeakOutput);
+        climbMotorMaster.configMotionAcceleration(Constants.kClimbAccel, Constants.kTimeoutMs);
+        climbMotorMaster.configMotionCruiseVelocity(Constants.kClimbVel, Constants.kTimeoutMs);
+
+    //END OF CLIMBING
   }
 
   /**
@@ -290,6 +309,7 @@ public class Robot extends TimedRobot {
         break;
       case kDefaultAuto:
       default:
+      Scheduler.getInstance().run();
       SmartDashboard.putNumber("Wrist Postion (encoder ticks): ", wristMaster.getSelectedSensorPosition(Constants.PID_PRIMARY));
       SmartDashboard.putNumber("Elev R Postion (encoder ticks): ", elevRightMaster.getSelectedSensorPosition(Constants.PID_PRIMARY));
       SmartDashboard.putNumber("Elev L Postion (encoder ticks): ", elevLeftMaster.getSelectedSensorPosition(Constants.PID_PRIMARY));
@@ -356,6 +376,8 @@ public class Robot extends TimedRobot {
       bButton.whenPressed(elevLow);
       xButton.whenPressed(elevMid);
       yButton.whenPressed(elevTop);
+      rightTrigger.whenPressed(extendClimb);
+      button2.whenPressed(retractClimb);
       //DeActivate
       LeftBumper.cancelWhenPressed(wristRest);
       RightBumper.cancelWhenPressed(wristIntake);
@@ -371,6 +393,8 @@ public class Robot extends TimedRobot {
       yButton.cancelWhenPressed(elevBot);
       yButton.cancelWhenPressed(elevLow);
       yButton.cancelWhenPressed(elevMid);
+      rightTrigger.cancelWhenPressed(retractClimb);
+      button2.cancelWhenPressed(extendClimb);
   
       //Reset Gyro
       if(leftJoy.getRawButton(6)){
@@ -407,6 +431,7 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void teleopPeriodic() {
+    Scheduler.getInstance().run();
     SmartDashboard.putNumber("Wrist Postion (encoder ticks): ", wristMaster.getSelectedSensorPosition(Constants.PID_PRIMARY));
     SmartDashboard.putNumber("Elev R Postion (encoder ticks): ", elevRightMaster.getSelectedSensorPosition(Constants.PID_PRIMARY));
     SmartDashboard.putNumber("Elev L Postion (encoder ticks): ", elevLeftMaster.getSelectedSensorPosition(Constants.PID_PRIMARY));
@@ -473,6 +498,8 @@ public class Robot extends TimedRobot {
     bButton.whenPressed(elevLow);
     xButton.whenPressed(elevMid);
     yButton.whenPressed(elevTop);
+    rightTrigger.whenPressed(extendClimb);
+    button2.whenPressed(retractClimb);
     //DeActivate
     LeftBumper.cancelWhenPressed(wristRest);
     RightBumper.cancelWhenPressed(wristIntake);
@@ -488,6 +515,8 @@ public class Robot extends TimedRobot {
     yButton.cancelWhenPressed(elevBot);
     yButton.cancelWhenPressed(elevLow);
     yButton.cancelWhenPressed(elevMid);
+    rightTrigger.cancelWhenPressed(retractClimb);
+    button2.cancelWhenPressed(extendClimb);
 
     //Reset Gyro
     if(leftJoy.getRawButton(6)){
