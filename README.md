@@ -7,3 +7,5 @@ The robot.java file is where all the main robot code is.
 The Gains.java file sets up a method to use in the Constants.java file to configure PIDF values.
 
 The Constants.java file contains the PIDF configs, PID slots, and some constants such as velocity and acceleration of major subsystems.
+
+MoveElev.java, MoveWrist.java, and MoveClimb.java are all commands that are run when a button is pressed in teleop/autonomous.
