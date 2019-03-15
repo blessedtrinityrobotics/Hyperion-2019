@@ -264,8 +264,45 @@ public class Robot extends TimedRobot {
         climbMotorMaster.configClosedLoopPeakOutput(Constants.kSlot_Climb, Constants.kGains_Climb.kPeakOutput);
         climbMotorMaster.configMotionAcceleration(Constants.kClimbAccel, Constants.kTimeoutMs);
         climbMotorMaster.configMotionCruiseVelocity(Constants.kClimbVel, Constants.kTimeoutMs);
-
     //END OF CLIMBING
+	  
+     /**
+     * A Button - 1 - elevator Bottom Position
+     * B Button - 2  - elevator Low Position
+     * X button - 3 - elevator Mid Position
+     * Y Button - 4 - elevator Top Position
+     * Left Bumper - 5 - Wrist down to intake
+     * Right Bumber - 6 - Wrist up to resting position
+     * Select Button - 7
+     * Start Button - 8
+     */
+    //Active
+    LeftBumper.whenPressed(wristIntake);
+    RightBumper.whenPressed(wristRest);
+    aButton.whenPressed(elevBot);
+    bButton.whenPressed(elevLow);
+    xButton.whenPressed(elevMid);
+    yButton.whenPressed(elevTop);
+    rightTrigger.whenPressed(extendClimb);
+    button2.whenPressed(retractClimb);
+    //DeActivate
+    LeftBumper.cancelWhenPressed(wristRest);
+    RightBumper.cancelWhenPressed(wristIntake);
+    aButton.cancelWhenPressed(elevLow);
+    aButton.cancelWhenPressed(elevMid);
+    aButton.cancelWhenPressed(elevTop);
+    bButton.cancelWhenPressed(elevBot);
+    bButton.cancelWhenPressed(elevMid);
+    bButton.cancelWhenPressed(elevTop);
+    xButton.cancelWhenPressed(elevBot);
+    xButton.cancelWhenPressed(elevLow);
+    xButton.cancelWhenPressed(elevTop);
+    yButton.cancelWhenPressed(elevBot);
+    yButton.cancelWhenPressed(elevLow);
+    yButton.cancelWhenPressed(elevMid);
+    rightTrigger.cancelWhenPressed(retractClimb);
+    button2.cancelWhenPressed(extendClimb);
+
   }
 
   /**
@@ -359,43 +396,6 @@ public class Robot extends TimedRobot {
         leftSlaveMotor2.follow(leftMasterMotor1);
         leftSlaveMotor3.follow(leftMasterMotor1);
       }
-      /**
-       * A Button - 1 - elevator Bottom Position
-       * B Button - 2  - elevator Low Position
-       * X button - 3 - elevator Mid Position
-       * Y Button - 4 - elevator Top Position
-       * Left Bumper - 5 - Wrist down to intake
-       * Right Bumber - 6 - Wrist up to resting position
-       * Select Button - 7
-       * Start Button - 8
-       */
-      //Active
-      LeftBumper.whenPressed(wristIntake);
-      RightBumper.whenPressed(wristRest);
-      aButton.whenPressed(elevBot);
-      bButton.whenPressed(elevLow);
-      xButton.whenPressed(elevMid);
-      yButton.whenPressed(elevTop);
-      rightTrigger.whenPressed(extendClimb);
-      button2.whenPressed(retractClimb);
-      //DeActivate
-      LeftBumper.cancelWhenPressed(wristRest);
-      RightBumper.cancelWhenPressed(wristIntake);
-      aButton.cancelWhenPressed(elevLow);
-      aButton.cancelWhenPressed(elevMid);
-      aButton.cancelWhenPressed(elevTop);
-      bButton.cancelWhenPressed(elevBot);
-      bButton.cancelWhenPressed(elevMid);
-      bButton.cancelWhenPressed(elevTop);
-      xButton.cancelWhenPressed(elevBot);
-      xButton.cancelWhenPressed(elevLow);
-      xButton.cancelWhenPressed(elevTop);
-      yButton.cancelWhenPressed(elevBot);
-      yButton.cancelWhenPressed(elevLow);
-      yButton.cancelWhenPressed(elevMid);
-      rightTrigger.cancelWhenPressed(retractClimb);
-      button2.cancelWhenPressed(extendClimb);
-  
       //Reset Gyro
       if(leftJoy.getRawButton(6)){
         onboardGyro.reset();
@@ -481,42 +481,6 @@ public class Robot extends TimedRobot {
       leftSlaveMotor2.follow(leftMasterMotor1);
       leftSlaveMotor3.follow(leftMasterMotor1);
     }
-    /**
-     * A Button - 1 - elevator Bottom Position
-     * B Button - 2  - elevator Low Position
-     * X button - 3 - elevator Mid Position
-     * Y Button - 4 - elevator Top Position
-     * Left Bumper - 5 - Wrist down to intake
-     * Right Bumber - 6 - Wrist up to resting position
-     * Select Button - 7
-     * Start Button - 8
-     */
-    //Active
-    LeftBumper.whenPressed(wristIntake);
-    RightBumper.whenPressed(wristRest);
-    aButton.whenPressed(elevBot);
-    bButton.whenPressed(elevLow);
-    xButton.whenPressed(elevMid);
-    yButton.whenPressed(elevTop);
-    rightTrigger.whenPressed(extendClimb);
-    button2.whenPressed(retractClimb);
-    //DeActivate
-    LeftBumper.cancelWhenPressed(wristRest);
-    RightBumper.cancelWhenPressed(wristIntake);
-    aButton.cancelWhenPressed(elevLow);
-    aButton.cancelWhenPressed(elevMid);
-    aButton.cancelWhenPressed(elevTop);
-    bButton.cancelWhenPressed(elevBot);
-    bButton.cancelWhenPressed(elevMid);
-    bButton.cancelWhenPressed(elevTop);
-    xButton.cancelWhenPressed(elevBot);
-    xButton.cancelWhenPressed(elevLow);
-    xButton.cancelWhenPressed(elevTop);
-    yButton.cancelWhenPressed(elevBot);
-    yButton.cancelWhenPressed(elevLow);
-    yButton.cancelWhenPressed(elevMid);
-    rightTrigger.cancelWhenPressed(retractClimb);
-    button2.cancelWhenPressed(extendClimb);
 
     //Reset Gyro
     if(leftJoy.getRawButton(6)){
