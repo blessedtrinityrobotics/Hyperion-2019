@@ -198,11 +198,11 @@ public class Robot extends TimedRobot {
         elevLeftMaster.setSensorPhase(true); //Reverse direction
 
         //Config PID F Gains
+	elevLeftMaster.selectProfileSlot(Constants.kSlot_Elev, Constants.PID_PRIMARY);
         elevLeftMaster.config_kP(Constants.kSlot_Elev, Constants.kGains_Elev.kP, Constants.kTimeoutMs);
         elevLeftMaster.config_kI(Constants.kSlot_Elev, Constants.kGains_Elev.kI, Constants.kTimeoutMs);
         elevLeftMaster.config_kD(Constants.kSlot_Elev, Constants.kGains_Elev.kD, Constants.kTimeoutMs);
         elevLeftMaster.config_kF(Constants.kSlot_Elev, Constants.kGains_Elev.kF, Constants.kTimeoutMs);
-        elevLeftMaster.configClosedLoopPeakOutput(Constants.kSlot_Elev, Constants.kGains_Elev.kPeakOutput);
         elevLeftMaster.configMotionAcceleration(Constants.kElevAccel, Constants.kTimeoutMs);
         elevLeftMaster.configMotionCruiseVelocity(Constants.kElevVel, Constants.kTimeoutMs);
       //Right
@@ -215,11 +215,11 @@ public class Robot extends TimedRobot {
         elevRightMaster.setSensorPhase(false); //Reverse direction
         elevRightMaster.configForwardSoftLimitEnable(true, Constants.kTimeoutMs);
         //Config PID F Gains
+	elevRightMaster.selectProfileSlot(Constants.kSlot_Elev, Constants.PID_PRIMARY);
         elevRightMaster.config_kP(Constants.kSlot_Elev, Constants.kGains_Elev.kP, Constants.kTimeoutMs);
         elevRightMaster.config_kI(Constants.kSlot_Elev, Constants.kGains_Elev.kI, Constants.kTimeoutMs);
         elevRightMaster.config_kD(Constants.kSlot_Elev, Constants.kGains_Elev.kD, Constants.kTimeoutMs);
         elevRightMaster.config_kF(Constants.kSlot_Elev, Constants.kGains_Elev.kF, Constants.kTimeoutMs);
-        elevRightMaster.configClosedLoopPeakOutput(Constants.kSlot_Elev, Constants.kGains_Elev.kPeakOutput);
         elevRightMaster.configMotionAcceleration(Constants.kElevAccel, Constants.kTimeoutMs);
         elevRightMaster.configMotionCruiseVelocity(Constants.kElevVel, Constants.kTimeoutMs);
     //END OF ELEVATOR
@@ -234,6 +234,7 @@ public class Robot extends TimedRobot {
         wristMaster.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, Constants.PID_PRIMARY, Constants.kTimeoutMs);
         wristMaster.setSensorPhase(false); //Reverse direction
         //Config PID F Gains
+	wristMaster.selectProfileSlot(Constants.Wrist, Constants.PID_PRIMARY);
         wristMaster.config_kP(Constants.kSlot_Wrist, Constants.kGains_Wrist.kP, Constants.kTimeoutMs);
         wristMaster.config_kI(Constants.kSlot_Wrist, Constants.kGains_Wrist.kI, Constants.kTimeoutMs);
         wristMaster.config_kD(Constants.kSlot_Wrist, Constants.kGains_Wrist.kD, Constants.kTimeoutMs);
@@ -257,6 +258,7 @@ public class Robot extends TimedRobot {
         climbMotorMaster.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, Constants.PID_PRIMARY, Constants.kTimeoutMs);
         climbMotorMaster.setSensorPhase(false);
         //Config PID F Gains
+	climbMotorMaster.selectProfileSlot(Constants.kSlot_Climb, Constants.PID_PRIMARY);
         climbMotorMaster.config_kP(Constants.kSlot_Climb, Constants.kGains_Climb.kP, Constants.kTimeoutMs);
         climbMotorMaster.config_kI(Constants.kSlot_Climb, Constants.kGains_Climb.kI, Constants.kTimeoutMs);
         climbMotorMaster.config_kD(Constants.kSlot_Climb, Constants.kGains_Climb.kD, Constants.kTimeoutMs);
