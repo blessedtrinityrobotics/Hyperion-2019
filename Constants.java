@@ -13,26 +13,26 @@ public class Constants {
 	//Elev peek sensor velocity 
 	public final static int kElevSensorVelocity  = 3410;
 	//Acceleration of Elevator in sensorUnitsPer100msPerSec
-	public final static int kElevAccel 			 = kElevSensorVelocity/2;
+	public final static int kElevAccel = kElevVel ;
 	//speed of Elevator in sensorUnitsPer100ms
-	public static int kElevVel 					 = kElevSensorVelocity/2;
+	public static int kElevVel = kElevSensorVelocity * 0.75 ;
 	
 	//Wrist peek sensor velocity
 	public final static int kWristSensorVel = 399;
 	//Acceleration of wrist in sensorUnitsPer100msPerSec
-	public final static int kWristAccel 	= kWristSensorVel/2 ;
+	public final static int kWristAccel = kWristVel ;
 	//Speed of Elevator in sensorUnitsPer100ms
-	public final static int kWristVel 	 	= kWristSensorVel/2;
+	public final static int kWristVel = kWristSensorVel * 0.75;
 
 
 	//Climb peek sensor velocity
 	public final static int kClimbSensorVelocity = 1000;
 
 	//Acceleration of climb in sensorUnitsPer100msPerSec
-	public final static int kClimbAccel 		 = kClimbSensorVelocity/2;
+	public final static int kClimbAccel = kClimbVel;
 
 	//speed of climb in sensorUnitsPer100ms
-	public static int kClimbVel 				 = kClimbSensorVelocity/2;
+	public static int kClimbVel = kClimbSensorVelocity * 0.75;
 	/**
 	 * Elevator Postion Targets
 	 * Top
