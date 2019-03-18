@@ -79,6 +79,7 @@ public class Robot extends TimedRobot {
      * Select Button - 7
      * Start Button - 8
      */
+   /*
     JoystickButton aButton      = new JoystickButton(operatorController, 1);
     JoystickButton bButton      = new JoystickButton(operatorController, 2);
     JoystickButton xButton      = new JoystickButton(operatorController,3);
@@ -87,7 +88,7 @@ public class Robot extends TimedRobot {
     JoystickButton RightBumper  = new JoystickButton(operatorController, 6);
     JoystickButton rightTrigger = new JoystickButton(rightJoy, 1);    
     JoystickButton button2      = new JoystickButton(rightJoy, 2);                                                                                                                                                          
-
+   */
 
 
   //Usually Variables
@@ -109,7 +110,7 @@ public class Robot extends TimedRobot {
     private double m_LimelightSteerCommand = 0.0;
     //LED - Test to see if the light is on/off during auto?
     boolean ledStatus = true;
-
+    /*
     //Wrist Commands
     MoveWrist wristIntake  = new MoveWrist(Constants.wristDown);
     MoveWrist wristRest    = new MoveWrist(Constants.wristStraight);
@@ -121,7 +122,7 @@ public class Robot extends TimedRobot {
     //Climb Commands
     MoveClimb extendClimb  = new MoveClimb(Constants.climbExtend);
     MoveClimb retractClimb = new MoveClimb(Constants.climbRetract);
-
+    */
 
 
     
@@ -285,6 +286,7 @@ public class Robot extends TimedRobot {
      * Start Button - 8
      */
     //Active
+    /*
     LeftBumper.whenPressed(wristIntake);
     RightBumper.whenPressed(wristRest);
     aButton.whenPressed(elevBot);
@@ -310,7 +312,7 @@ public class Robot extends TimedRobot {
     yButton.cancelWhenPressed(elevMid);
     rightTrigger.cancelWhenPressed(retractClimb);
     button2.cancelWhenPressed(extendClimb);
-
+    */
   }
 
   /**
@@ -354,28 +356,14 @@ public class Robot extends TimedRobot {
         break;
       case kDefaultAuto:
       default:
-      Scheduler.getInstance().run();
+      //Scheduler.getInstance().run();
       SmartDashboard.putNumber("Wrist Postion (encoder ticks): ", wristMaster.getSelectedSensorPosition(Constants.PID_PRIMARY));
       SmartDashboard.putNumber("Elev R Postion (encoder ticks): ", elevRightMaster.getSelectedSensorPosition(Constants.PID_PRIMARY));
       SmartDashboard.putNumber("Elev L Postion (encoder ticks): ", elevLeftMaster.getSelectedSensorPosition(Constants.PID_PRIMARY));
       Update_Limelight_Tracking();
       double driveForwardPower;
       double turnPower;
-      if(wristIntake.isRunning() || wristRest.isRunning()){
-  
-      } else {
-        wristMaster.set(ControlMode.PercentOutput, operatorController.getY(Hand.kRight));
-        wristSlave.follow(wristMaster);
-      }
-  
-      if(elevBot.isRunning() || elevLow.isRunning() || elevMid.isRunning() || elevTop.isRunning()){
-  
-      } else {
-        elevLeftMaster.set(ControlMode.PercentOutput, operatorController.getY(Hand.kLeft));
-        elevLeftSlave.follow(elevLeftMaster);
-        elevRightMaster.set(ControlMode.PercentOutput, operatorController.getY(Hand.kLeft));
-        elevRightSlave.follow(elevRightMaster);
-      }
+      
   
       //Drive Train Controls
       if (leftJoy.getTrigger()){
@@ -404,10 +392,14 @@ public class Robot extends TimedRobot {
         leftSlaveMotor2.follow(leftMasterMotor1);
         leftSlaveMotor3.follow(leftMasterMotor1);
       }
-      //Reset Gyro
-      if(leftJoy.getRawButton(6)){
-        onboardGyro.reset();
-      }
+     //Reset Gyro 
+     if(rightJoy.getRawButtonPressed(4)){
+	onboardGyro.reset();
+     }
+     //PID Drive Straight
+     if(rightJoy.getRawButton(4)){
+	PIDControl(0, 1.0); 
+     }
   
       // turn on/off Vision Tracking
       if(leftJoy.getRawButtonPressed(7)){
@@ -439,7 +431,7 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void teleopPeriodic() {
-    Scheduler.getInstance().run();
+    //Scheduler.getInstance().run();
     SmartDashboard.putNumber("Wrist Postion (encoder ticks): ", wristMaster.getSelectedSensorPosition(Constants.PID_PRIMARY));
     SmartDashboard.putNumber("Elev R Postion (encoder ticks): ", elevRightMaster.getSelectedSensorPosition(Constants.PID_PRIMARY));
     SmartDashboard.putNumber("Elev L Postion (encoder ticks): ", elevLeftMaster.getSelectedSensorPosition(Constants.PID_PRIMARY));
@@ -478,6 +470,7 @@ public class Robot extends TimedRobot {
     if(rightJoy.getRawButtonPressed(4)){
       onboardGyro.reset();
     }
+    //PID Drive Straight
     if(rightJoy.getRawButton(4)){
       PIDControl(0, 1.0); 
     }
@@ -503,6 +496,14 @@ public class Robot extends TimedRobot {
     } else {
       intakeMotor.set(ControlMode.PercentOutput, 0.2);
     }
+	  
+	  
+    //Tuning 
+    if(operatorController.getAButton){
+      elevLeftMaster.set(ControlMode.MotionMagic, 5000); //Find out direction
+      elevLeftSlave.follow(elevLeftMaster);
+      elevRightMaster.set(ControlMode.MotionMagic, -5000); //Find out direction
+      elevRightSlave.follow(elevRightMaster);
   }
 
   /**
