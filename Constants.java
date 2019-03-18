@@ -26,7 +26,7 @@ public class Constants {
 
 
 	//Climb peek sensor velocity
-	public final static int kClimbSensorVelocity = 0;
+	public final static int kClimbSensorVelocity = 1000;
 
 	//Acceleration of climb in sensorUnitsPer100msPerSec
 	public final static int kClimbAccel 		 = kClimbSensorVelocity/2;
@@ -65,11 +65,11 @@ public class Constants {
      * kF: 1023 represents output value to Talon at 100%, 6800 represents Velocity units at 100% output
      * Not all set of Gains are used in this project and may be removed as desired.
      * 
-	 * 	                                    				kP   kI   kD   kF                       Iz    PeakOut */
-	public final static Gains kGains_Distanc = new Gains( 0.1, 0.0,  0.0, 0.0,                      100,  0.50 );
-	public final static Gains kGains_Elev    = new Gains( 0.0, 0.0,  0.0, 1023/kElevSensorVelocity, 500,  0.50 );
-	public final static Gains kGains_Wrist   = new Gains( 0.0, 0.0,  0.0, 1023/kWristSensorVel,     500,  0.50 );
-	public final static Gains kGains_Climb   = new Gains( 0.0, 0.0,  0.0, 0.0, 						500,  0.50 );
+	 * 	                                    	       kP   kI   kD   kF                          Iz   PeakOut */
+	public final static Gains kGains_Distanc = new Gains( 0.1, 0.0,  0.0, 0.0,                       100,  0.50 );
+	public final static Gains kGains_Elev    = new Gains( 0.0, 0.0,  0.0, 1023/kElevSensorVelocity,  500,  0.50 );
+	public final static Gains kGains_Wrist   = new Gains( 0.0, 0.0,  0.0, 1023/kWristSensorVel,      500,  0.50 );
+	public final static Gains kGains_Climb   = new Gains( 0.0, 0.0,  0.0, 1023/kClimbSensorVelocity, 500,  0.50 );
 
 	
 	/** ---- Flat constants, you should not need to change these ---- */
