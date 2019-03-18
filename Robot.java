@@ -205,6 +205,7 @@ public class Robot extends TimedRobot {
         elevLeftMaster.config_kF(Constants.kSlot_Elev, Constants.kGains_Elev.kF, Constants.kTimeoutMs);
         elevLeftMaster.configMotionAcceleration(Constants.kElevAccel, Constants.kTimeoutMs);
         elevLeftMaster.configMotionCruiseVelocity(Constants.kElevVel, Constants.kTimeoutMs);
+	elevLeftMaster.setSelectedSensorPosition(0, Constants.PID_PRIMARY, Constants.kTimeoutMs);
       //Right
       elevRightMaster.setInverted(false); //Reverse direction
       elevRightSlave .setInverted(true); //Reverse direction
@@ -222,6 +223,8 @@ public class Robot extends TimedRobot {
         elevRightMaster.config_kF(Constants.kSlot_Elev, Constants.kGains_Elev.kF, Constants.kTimeoutMs);
         elevRightMaster.configMotionAcceleration(Constants.kElevAccel, Constants.kTimeoutMs);
         elevRightMaster.configMotionCruiseVelocity(Constants.kElevVel, Constants.kTimeoutMs);
+	elevRightMaster.setSelectedSensorPosition(0, Constants.PID_PRIMARY, Constants.kTimeoutMs);
+
     //END OF ELEVATOR
     
     //WRIST
@@ -239,9 +242,10 @@ public class Robot extends TimedRobot {
         wristMaster.config_kI(Constants.kSlot_Wrist, Constants.kGains_Wrist.kI, Constants.kTimeoutMs);
         wristMaster.config_kD(Constants.kSlot_Wrist, Constants.kGains_Wrist.kD, Constants.kTimeoutMs);
         wristMaster.config_kF(Constants.kSlot_Wrist, Constants.kGains_Wrist.kF, Constants.kTimeoutMs);
-        wristMaster.configClosedLoopPeakOutput(Constants.kSlot_Wrist, Constants.kGains_Wrist.kPeakOutput);
         wristMaster.configMotionAcceleration(Constants.kWristAccel, Constants.kTimeoutMs);
         wristMaster.configMotionCruiseVelocity(Constants.kWristVel, Constants.kTimeoutMs);
+	wristMaster.setSelectedSensorPosition(0, Constants.PID_PRIMARY, Constants.kTimeoutMs);
+
     //END OF WRIST
 
     //INTAKE
@@ -263,10 +267,12 @@ public class Robot extends TimedRobot {
         climbMotorMaster.config_kI(Constants.kSlot_Climb, Constants.kGains_Climb.kI, Constants.kTimeoutMs);
         climbMotorMaster.config_kD(Constants.kSlot_Climb, Constants.kGains_Climb.kD, Constants.kTimeoutMs);
         climbMotorMaster.config_kF(Constants.kSlot_Climb, Constants.kGains_Climb.kF, Constants.kTimeoutMs);
-        climbMotorMaster.configClosedLoopPeakOutput(Constants.kSlot_Climb, Constants.kGains_Climb.kPeakOutput);
         climbMotorMaster.configMotionAcceleration(Constants.kClimbAccel, Constants.kTimeoutMs);
         climbMotorMaster.configMotionCruiseVelocity(Constants.kClimbVel, Constants.kTimeoutMs);
+	climbMotorMaster.setSelectedSensorPosition(0, Constants.PID_PRIMARY, Constants.kTimeoutMs);
+
     //END OF CLIMBING
+	  
 	  
      /**
      * A Button - 1 - elevator Bottom Position
@@ -440,22 +446,6 @@ public class Robot extends TimedRobot {
     Update_Limelight_Tracking();
     double driveForwardPower;
     double turnPower;
-    if(wristIntake.isRunning() || wristRest.isRunning()){
-
-    } else {
-      wristMaster.set(ControlMode.PercentOutput, operatorController.getY(Hand.kRight));
-      wristSlave.follow(wristMaster);
-    }
-
-    if(elevBot.isRunning() || elevLow.isRunning() || elevMid.isRunning() || elevTop.isRunning()){
-
-    } else {
-      elevLeftMaster.set(ControlMode.PercentOutput, operatorController.getY(Hand.kLeft));
-      elevLeftSlave.follow(elevLeftMaster);
-      elevRightMaster.set(ControlMode.PercentOutput, operatorController.getY(Hand.kLeft));
-      elevRightSlave.follow(elevRightMaster);
-    }
-
     //Drive Train Controls
     if (leftJoy.getTrigger()){
       if (m_LimelightHasValidTarget){
@@ -485,8 +475,11 @@ public class Robot extends TimedRobot {
     }
 
     //Reset Gyro
-    if(leftJoy.getRawButton(6)){
+    if(rightJoy.getRawButtonPressed(4)){
       onboardGyro.reset();
+    }
+    if(rightJoy.getRawButton(4)){
+      PIDControl(0, 1.0); 
     }
 
     // turn on/off Vision Tracking
