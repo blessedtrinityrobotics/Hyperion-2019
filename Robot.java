@@ -191,13 +191,13 @@ public class Robot extends TimedRobot {
 
     //ELEVATOR
       //Left
-      elevLeftMaster.setInverted(true); //Reverse direction
+      elevLeftMaster.setInverted(false); //Reverse direction
       elevLeftSlave .setInverted(true); //Reverse direction
       elevLeftMaster.setNeutralMode(NeutralMode.Brake);
       elevLeftSlave .setNeutralMode(NeutralMode.Brake);
         //Encoder
         elevLeftMaster.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, Constants.PID_PRIMARY, Constants.kTimeoutMs);
-        elevLeftMaster.setSensorPhase(true); //Reverse direction
+        elevLeftMaster.setSensorPhase(false); //Reverse direction
 
         //Config PID F Gains
 	elevLeftMaster.selectProfileSlot(Constants.kSlot_Elev, Constants.PID_PRIMARY);
@@ -216,7 +216,6 @@ public class Robot extends TimedRobot {
         //Encoder
         elevRightMaster.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, Constants.PID_PRIMARY, Constants.kTimeoutMs);
         elevRightMaster.setSensorPhase(false); //Reverse direction
-        elevRightMaster.configForwardSoftLimitEnable(true, Constants.kTimeoutMs);
         //Config PID F Gains
 	elevRightMaster.selectProfileSlot(Constants.kSlot_Elev, Constants.PID_PRIMARY);
         elevRightMaster.config_kP(Constants.kSlot_Elev, Constants.kGains_Elev.kP, Constants.kTimeoutMs);
