@@ -50,8 +50,9 @@ public class Constants {
 	 * Straight
 	 * Low
 	 */
-	public static final int wristStraight = 90;
-	public static final int wristDown	  = 110;
+	public static final int wristStraight = 0;
+	public static final int wristDown     = 110;
+	public static final int wristHatch    = 90
 
 	/** 
 	 * Climb Targets
