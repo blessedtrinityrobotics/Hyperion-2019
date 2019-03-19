@@ -114,6 +114,7 @@ public class Robot extends TimedRobot {
     //Wrist Commands
     MoveWrist wristIntake  = new MoveWrist(Constants.wristDown);
     MoveWrist wristRest    = new MoveWrist(Constants.wristStraight);
+    MoveWrist wristHatch   = new MoveWrist(Constants.wristHatch);
     //Elevator Commands
     MoveElev elevBot       = new MoveElev(Constants.elevBotGoal);
     MoveElev elevLow       = new MoveElev(Constants.elevLowGoal);
