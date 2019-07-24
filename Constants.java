@@ -12,20 +12,15 @@ public class Constants {
 
 	//Elev peek sensor velocity 
 	public final static int kElevSensorVelocity  = 3410;
-	
 	//Acceleration of Elevator in sensorUnitsPer100msPerSec
-	public final static int kElevAccel = kElevVel/2 ;
-	
+	public final static int kElevAccel = kElevSensorVelocity/2 ;
 	//speed of Elevator in sensorUnitsPer100ms
 	public static int kElevVel = kElevSensorVelocity/2 ;
 	
-	
 	//Wrist peek sensor velocity
 	public final static int kWristSensorVel = 399;
-	
 	//Acceleration of wrist in sensorUnitsPer100msPerSec
-	public final static int kWristAccel = kWristVel/2;
-	
+	public final static int kWristAccel = kWristSensorVel/2 ;
 	//Speed of Elevator in sensorUnitsPer100ms
 	public final static int kWristVel = kWristSensorVel/2;
 
@@ -34,7 +29,7 @@ public class Constants {
 	public final static int kClimbSensorVelocity = 1000;
 
 	//Acceleration of climb in sensorUnitsPer100msPerSec
-	public final static int kClimbAccel = kClimbVel/2;
+	public final static int kClimbAccel = kClimbSensorVelocity;
 
 	//speed of climb in sensorUnitsPer100ms
 	public static int kClimbVel = kClimbSensorVelocity/2;
@@ -45,27 +40,26 @@ public class Constants {
 	 * Low
 	 * Bot
 	 */
-	public final static int elevTopGoal = 19000;
-	public final static int elevMidGoal = 10000;
+	public final static int elevTopGoal = 10000;
+	public final static int elevMidGoal = 7000;
 	public final static int elevLowGoal = 5000;
 	public final static int elevBotGoal = 0;
 
 	/**
 	 * Wrist Targets
-	 * Straight (Up)
-	 * Down (Intake)
-	 * Hatch 
+	 * Straight
+	 * Low
 	 */
 	public static final int wristStraight = 0;
-	public static final int wristDown     = 3000;
-	public static final int wristHatch    = 2500
+	public static final int wristDown     = 110;
+	public static final int wristHatch    = 90;
 
 	/** 
 	 * Climb Targets
 	 * Extend
 	 * Retract
 	 */
-	public static final int climbExtend  = 1000;
+	public static final int climbExtend = 100;
 	public static final int climbRetract = 0;
 	/**
 	 * PID Gains may have to be adjusted based on the responsiveness of control loop.
@@ -74,7 +68,7 @@ public class Constants {
      * 
 	 * 	                                    	       kP   kI   kD   kF                          Iz   PeakOut */
 	public final static Gains kGains_Distanc = new Gains( 0.1, 0.0,  0.0, 0.0,                       100,  0.50 );
-	public final static Gains kGains_Elev    = new Gains( 1.5, 0.0,  0.0, 1023/kElevSensorVelocity,  500,  0.50 );
+	public final static Gains kGains_Elev    = new Gains( 0.0, 0.0,  0.0, 1023/kElevSensorVelocity,  500,  0.50 );
 	public final static Gains kGains_Wrist   = new Gains( 0.0, 0.0,  0.0, 1023/kWristSensorVel,      500,  0.50 );
 	public final static Gains kGains_Climb   = new Gains( 0.0, 0.0,  0.0, 1023/kClimbSensorVelocity, 500,  0.50 );
 
@@ -86,9 +80,14 @@ public class Constants {
 	/* We allow either a 0 or 1 when selecting a PID Index, where 0 is primary and 1 is auxiliary */
 	public final static int PID_PRIMARY = 0;
 	public final static int PID_TURN = 1;
+	/* Firmware currently supports slots [0, 3] and can be used for either PID Set */
+	public final static int SLOT_0 = 0;
+	public final static int SLOT_1 = 1;
+	public final static int SLOT_2 = 2;
+	public final static int SLOT_3 = 3;
 	/* ---- Named slots, used to clarify code ---- */
-	public final static int kSlot_Distanc = 0;
-	public final static int kSlot_Elev = 1;
-	public final static int kSlot_Wrist = 2;
-	public final static int kSlot_Climb = 3;
+	public final static int kSlot_Distanc = SLOT_0;
+	public final static int kSlot_Elev = SLOT_1;
+	public final static int kSlot_Wrist = SLOT_2;
+	public final static int kSlot_Climb = SLOT_3;
 }
